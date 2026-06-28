@@ -1,0 +1,3078 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Porgs vs Skeletons</title>
+<style>
+*{box-sizing:border-box;margin:0;padding:0;}
+body{font-family:system-ui,sans-serif;background:#1a1a2e;color:#eee;overflow-x:hidden;}
+
+/* ===== LOBBY ===== */
+#lobby{display:none;min-height:100vh;background:linear-gradient(135deg,#1a1a2e 0%,#16213e 50%,#0f3460 100%);padding:20px;}
+#lobby.show{display:block;}
+.lobby-header{text-align:center;padding:24px 0 16px;}
+.lobby-header h1{font-size:2rem;color:#f5c400;text-shadow:0 0 20px #f5c40066;}
+.lobby-header p{color:#aaa;margin-top:6px;font-size:0.9rem;}
+.lobby-stats{display:flex;gap:16px;justify-content:center;flex-wrap:wrap;margin:16px 0;}
+.stat-chip{background:#ffffff18;border:1px solid #ffffff22;border-radius:10px;padding:10px 20px;text-align:center;}
+.stat-chip .val{font-size:1.4rem;font-weight:700;color:#f5c400;}
+.stat-chip .lbl{font-size:0.75rem;color:#aaa;margin-top:2px;}
+.lobby-section{max-width:800px;margin:0 auto 24px;}
+.lobby-section h2{font-size:1rem;color:#5DCAA5;margin-bottom:10px;text-transform:uppercase;letter-spacing:1px;}
+.pl-slider{margin-bottom:10px;}
+.pl-slider span{font-size:0.82rem;color:#ccc;display:block;margin-bottom:3px;}
+.pl-slider input[type=range]{width:100%;accent-color:#7F77DD;}
+.pl-emoji-btn{font-size:1.3rem;padding:4px 7px;background:#ffffff10;border:1px solid #ffffff33;border-radius:8px;cursor:pointer;transition:all 0.1s;}
+.pl-emoji-btn:hover{background:#ffffff20;}
+.pl-emoji-btn.sel{border-color:#7F77DD;background:#7F77DD33;}
+.shop-grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(140px,1fr));gap:10px;}
+.lobby-card{background:#ffffff0e;border:1px solid #ffffff22;border-radius:12px;padding:12px;cursor:pointer;transition:all 0.15s;text-align:center;}
+.lobby-card:hover{background:#ffffff18;border-color:#f5c40055;transform:translateY(-2px);}
+.lobby-card.owned{border-color:#5DCAA5;background:#5DCAA518;}
+.lobby-card.locked{opacity:0.5;cursor:not-allowed;}
+.lobby-card .lc-emoji{font-size:2rem;margin-bottom:6px;}
+.lobby-card .lc-name{font-size:0.85rem;font-weight:600;margin-bottom:4px;}
+.lobby-card .lc-desc{font-size:0.72rem;color:#aaa;margin-bottom:8px;line-height:1.3;}
+.lobby-card .lc-cost{font-size:0.8rem;font-weight:700;color:#4CAF50;}
+.lobby-card .lc-cost.seeds{color:#90EE90;}
+.lobby-card .lc-owned{font-size:0.75rem;color:#5DCAA5;font-weight:600;}
+.lobby-btn{display:block;width:200px;margin:0 auto;padding:14px;background:#378ADD;border:none;border-radius:12px;color:#fff;font-size:1rem;font-weight:600;cursor:pointer;text-align:center;transition:background 0.15s;}
+.lobby-btn:hover{background:#2a6ab5;}
+.lobby-btn.danger{background:#c0392b;}
+.lobby-btn.danger:hover{background:#96281b;}
+.seeds-bar{background:#ffffff0e;border:1px solid #ffffff22;border-radius:10px;padding:12px 20px;text-align:center;margin-bottom:16px;}
+.seeds-bar .seeds-val{font-size:1.6rem;font-weight:700;color:#90EE90;}
+
+/* ===== GAME ===== */
+#game-wrapper{display:none;}
+#game-wrapper.show{display:block;}
+#top-bar{display:flex;align-items:center;gap:3px;padding:5px 6px;background:#2a2a3e;border-bottom:1px solid #444;flex-wrap:wrap;}
+#sun-count{font-size:12px;font-weight:500;color:#fff;white-space:nowrap;}
+#seeds-count{font-size:11px;font-weight:500;color:#90EE90;white-space:nowrap;margin-left:4px;}
+.shop-card{display:flex;flex-direction:column;align-items:center;padding:3px 4px;border:0.5px solid #555;border-radius:6px;cursor:pointer;background:#2a2a3e;min-width:48px;font-size:8px;color:#bbb;transition:background 0.1s;}
+.shop-card:hover{background:#3a3a4e;}
+.shop-card.selected{border:2px solid #378ADD;background:#1a3a5e;}
+.shop-card.op{border:0.5px solid #BA7517;background:#2a1f0e;}
+.shop-card.op.selected{border:2px solid #BA7517;background:#3a2f1e;}
+.shop-card.ultra{border:0.5px solid #7F77DD;background:#1e1a3e;}
+.shop-card.ultra.selected{border:2px solid #7F77DD;background:#2e2a5e;}
+.shop-card.cosmic{border:0.5px solid #1D9E75;background:#0a2018;}
+.shop-card.cosmic.selected{border:2px solid #1D9E75;background:#1a3028;}
+.shop-card.dive{border:0.5px solid #D85A30;background:#2a1510;}
+.shop-card.dive.selected{border:2px solid #D85A30;background:#3a2520;}
+.shop-card.grape{border:0.5px solid #7F77DD;background:#1e1a3e;}
+.shop-card.grape.selected{border:2px solid #534AB7;background:#2e2a5e;}
+.shop-card.octo{border:0.5px solid #D4537E;background:#2a1020;}
+.shop-card.octo.selected{border:2px solid #993556;background:#3a2030;}
+.shop-card.remove-card{border:0.5px solid #E24B4A;background:#2a1010;}
+.shop-card.remove-card.selected{border:2px solid #A32D2D;background:#3a2020;}
+.shop-card.locked-unit{opacity:0.4;cursor:not-allowed;}
+.shop-card .emoji{font-size:15px;line-height:1.2;}
+.shop-card .cost{font-size:8px;font-weight:500;color:#BA7517;}
+.shop-card .refund{font-size:8px;font-weight:500;color:#4CAF50;}
+#status-bar{font-size:10px;color:#aaa;margin-left:auto;white-space:nowrap;}
+#canvas{display:block;width:100%;cursor:crosshair;}
+#upgrade-panel{display:none;padding:5px 8px;background:#2a2a3e;border-top:1px solid #444;font-size:11px;color:#fff;}
+#upgrade-panel.show{display:flex;align-items:center;gap:8px;flex-wrap:wrap;}
+#msg-overlay{position:absolute;top:0;left:0;right:0;bottom:0;display:none;align-items:center;justify-content:center;flex-direction:column;gap:12px;background:rgba(0,0,0,0.7);pointer-events:none;}
+#msg-overlay.show{display:flex;pointer-events:all;}
+#msg-text{font-size:18px;font-weight:500;color:#fff;text-align:center;padding:0 16px;}
+#msg-sub{font-size:13px;color:#aaa;text-align:center;padding:0 16px;max-width:360px;}
+#msg-btn{padding:8px 24px;border-radius:8px;border:none;background:#378ADD;color:#fff;font-size:14px;cursor:pointer;}
+#msg-btn2{padding:8px 24px;border-radius:8px;border:none;background:#5DCAA5;color:#fff;font-size:14px;cursor:pointer;display:none;}
+#canvas-container{position:relative;}
+</style>
+</head>
+<body>
+
+<!-- LOBBY -->
+<div id="lobby" class="show">
+  <div class="lobby-header">
+    <h1>🐦 Porgs vs Skeletons</h1>
+    <p>Defend your lawn across 10,000 waves of skeleton terror</p>
+  </div>
+  <div class="lobby-stats">
+    <div class="stat-chip"><div class="val" id="lb-wave">0</div><div class="lbl">Highest Wave</div></div>
+    <div class="stat-chip"><div class="val" id="lb-damage">0</div><div class="lbl">Total Damage</div></div>
+    <div class="stat-chip"><div class="val" id="lb-kills">0</div><div class="lbl">Skeletons Slain</div></div>
+    <div class="stat-chip"><div class="val seeds-val" id="lb-seeds">0 🌱</div><div class="lbl">Seeds Available</div></div>
+  </div>
+  <div class="seeds-bar">
+    <div class="seeds-val" id="lb-seeds2">0 🌱 Seeds</div>
+    <div style="font-size:0.78rem;color:#aaa;margin-top:4px;">Earn 1 seed per 100 damage dealt. Spend seeds to unlock units!</div>
+  </div>
+  <div class="lobby-section">
+    <h2>🔓 Unit Unlocks</h2>
+    <div class="shop-grid" id="unlock-grid"></div>
+  </div>
+  <div class="lobby-section">
+    <h2>💪 Power Upgrades</h2>
+    <div class="shop-grid" id="upgrade-grid"></div>
+  </div>
+  <div class="lobby-section" id="porg-lab-section">
+    <h2>🏗️ Custom Porg Lab</h2>
+    <div id="porg-lab-locked" style="background:#ffffff0e;border:1px solid #ffffff22;border-radius:12px;padding:20px;text-align:center;color:#888;">
+      🔒 Reach <b style="color:#f5c400;">Wave 10</b> to unlock the Custom Porg Lab and design your own Porg!
+    </div>
+    <div id="porg-lab-content" style="display:none;">
+      <div style="margin-bottom:12px;display:flex;gap:8px;align-items:center;flex-wrap:wrap;">
+        <span style="font-size:0.8rem;color:#aaa;">⚡ Quick Start:</span>
+        <button class="pl-preset" onclick="applyPreset('glass')" style="padding:5px 12px;border-radius:8px;border:1px solid #c0392b66;background:#c0392b22;color:#ff9b8a;font-size:0.78rem;cursor:pointer;">💥 Glass Cannon</button>
+        <button class="pl-preset" onclick="applyPreset('tank')" style="padding:5px 12px;border-radius:8px;border:1px solid #5DCAA566;background:#5DCAA522;color:#9fe1cb;font-size:0.78rem;cursor:pointer;">🛡️ Bruiser</button>
+        <button class="pl-preset" onclick="applyPreset('sniper')" style="padding:5px 12px;border-radius:8px;border:1px solid #f5c40066;background:#f5c40022;color:#f5d77a;font-size:0.78rem;cursor:pointer;">🏹 Sniper</button>
+        <button class="pl-preset" onclick="applyPreset('support')" style="padding:5px 12px;border-radius:8px;border:1px solid #7F77DD66;background:#7F77DD22;color:#c4bfff;font-size:0.78rem;cursor:pointer;">☀️ Support</button>
+        <button class="pl-preset" onclick="applyPreset('immortal')" style="padding:5px 12px;border-radius:8px;border:1px solid #1D9E7566;background:#1D9E7522;color:#7fe0bc;font-size:0.78rem;cursor:pointer;">🐢 Immortal</button>
+        <button class="pl-preset" onclick="applyPreset('god')" style="padding:5px 12px;border-radius:8px;border:1px solid #f5c40088;background:linear-gradient(90deg,#f5c40033,#ff6b0033);color:#ffd700;font-size:0.78rem;cursor:pointer;font-weight:700;">👑 GOD PORG</button>
+        <button class="pl-preset" onclick="applyPreset('serpentslayer')" style="padding:5px 12px;border-radius:8px;border:1px solid #ff3d3d88;background:linear-gradient(90deg,#ff3d3d33,#9650ff33);color:#ff6b6b;font-size:0.78rem;cursor:pointer;font-weight:700;">⚡ Serpent Slayer</button>
+      </div>
+      <div style="background:#ffffff0e;border:1px solid #7F77DD55;border-radius:12px;padding:16px;">
+        <div style="display:flex;gap:16px;flex-wrap:wrap;align-items:flex-start;">
+          <div style="flex:1;min-width:240px;">
+            <div style="margin-bottom:10px;">
+              <label style="font-size:0.8rem;color:#aaa;display:block;margin-bottom:4px;">Name</label>
+              <input id="pl-name" type="text" maxlength="14" value="My Porg" style="width:100%;padding:7px;border-radius:6px;border:1px solid #ffffff33;background:#ffffff10;color:#fff;font-size:0.9rem;">
+            </div>
+            <div style="margin-bottom:8px;">
+              <label style="font-size:0.8rem;color:#aaa;display:block;margin-bottom:4px;">Body Emoji</label>
+              <div id="pl-emoji-row" style="display:flex;gap:5px;flex-wrap:wrap;"></div>
+            </div>
+            <div style="margin-bottom:8px;">
+              <label style="font-size:0.8rem;color:#aaa;display:block;margin-bottom:4px;">Projectile</label>
+              <div id="pl-proj-row" style="display:flex;gap:5px;flex-wrap:wrap;"></div>
+            </div>
+            <div style="margin-bottom:8px;">
+              <label style="font-size:0.8rem;color:#aaa;display:block;margin-bottom:4px;">Special Ability</label>
+              <select id="pl-ability" style="width:100%;padding:7px;border-radius:6px;border:1px solid #ffffff33;background:#2a2a3e;color:#fff;font-size:0.85rem;">
+                <option value="none">🎯 Normal Shot</option>
+                <option value="splash">💥 Splash (AoE explosion)</option>
+                <option value="sun">☀️ Sun Generator (+sun over time)</option>
+                <option value="freeze">❄️ Cryo (freezes enemies hit)</option>
+                <option value="chain">⚡ Chain Lightning (bounces)</option>
+                <option value="poison">☠️ Toxic (damage over time)</option>
+                <option value="pierce">🏹 Piercing (hits all in row)</option>
+                <option value="vampiric">🧛 Vampiric (heals nearby Porgs on hit)</option>
+                <option value="slowfield">🕸️ Slow Field (slows all enemies in range)</option>
+              </select>
+            </div>
+          </div>
+          <div style="flex:1;min-width:240px;">
+            <div class="pl-slider"><span>❤️ Health: <b id="pl-hp-val">200</b></span><input id="pl-hp" type="range" min="50" max="1000000" step="1000" value="200"></div>
+            <div class="pl-slider"><span>⚔️ Damage: <b id="pl-dmg-val">40</b></span><input id="pl-dmg" type="range" min="5" max="500000" step="500" value="40"></div>
+            <div class="pl-slider"><span>⚡ Fire Rate: <b id="pl-rate-val">60</b></span><input id="pl-rate" type="range" min="2" max="180" step="1" value="60"></div>
+            <div class="pl-slider"><span>🎯 Range: <b id="pl-range-val">full row</b></span><input id="pl-range" type="range" min="1" max="9" step="1" value="9"></div>
+            <div class="pl-slider"><span>🦅 Projectile Speed: <b id="pl-pspeed-val">4</b></span><input id="pl-pspeed" type="range" min="2" max="20" step="1" value="4"></div>
+            <div class="pl-slider"><span>🛡️ Armor (% dmg reduction): <b id="pl-armor-val">0%</b></span><input id="pl-armor" type="range" min="0" max="95" step="5" value="0"></div>
+            <div class="pl-slider"><span>💚 Regen (HP/sec): <b id="pl-regen-val">0</b></span><input id="pl-regen" type="range" min="0" max="100000" step="500" value="0"></div>
+            <div style="margin-top:10px;padding:8px;background:#ffffff08;border-radius:8px;">
+              <div style="font-size:0.78rem;color:#aaa;display:flex;justify-content:space-between;">
+                <span>Power Rating</span><b id="pl-power-label" style="color:#5DCAA5;">—</b>
+              </div>
+              <div style="height:8px;background:#ffffff15;border-radius:4px;margin-top:4px;overflow:hidden;">
+                <div id="pl-power-bar" style="height:100%;width:0%;background:linear-gradient(90deg,#5DCAA5,#f5c400,#c0392b);transition:width 0.2s;"></div>
+              </div>
+            </div>
+            <div style="margin-top:10px;padding:10px;background:radial-gradient(circle at 50% 40%,#2a3a2a,#1a1a2e);border-radius:8px;text-align:center;border:1px solid #ffffff15;">
+              <div style="font-size:0.72rem;color:#888;margin-bottom:4px;">Live Preview</div>
+              <div id="pl-preview" style="font-size:2.4rem;line-height:1;position:relative;height:50px;display:flex;align-items:center;justify-content:center;gap:4px;">
+                <span id="pl-preview-body">🦜</span>
+                <span id="pl-preview-proj" style="font-size:1.3rem;opacity:0.9;">⭐</span>
+              </div>
+              <div id="pl-preview-dps" style="font-size:0.74rem;color:#5DCAA5;margin-top:4px;">DPS: —</div>
+            </div>
+          </div>
+        </div>
+        <div style="margin-top:14px;display:flex;align-items:center;justify-content:space-between;flex-wrap:wrap;gap:10px;">
+          <div style="font-size:0.85rem;color:#aaa;">Build Cost: <b id="pl-cost" style="color:#f5c400;">☀️ 0</b> · Lab Fee: <b id="pl-fee" style="color:#90EE90;">🌱 1,000 seeds</b></div>
+          <button class="lobby-btn" style="width:auto;padding:10px 24px;" onclick="saveCustomPorg()">💾 Save Custom Porg</button>
+        </div>
+        <div style="font-size:0.72rem;color:#777;margin-top:8px;">💡 Tip: custom Porgs can be upgraded in battle (click them) just like normal units — each level boosts HP &amp; damage and speeds up fire rate.</div>
+        <div id="pl-saved" style="margin-top:14px;"></div>
+      </div>
+    </div>
+  </div>
+
+  <!-- CUSTOM SKELETON LAB -->
+  <div class="lobby-section" id="skel-lab-section">
+    <h2 style="color:#c0392b;">💀 Custom Skeleton Lab</h2>
+    <div id="skel-lab-locked" style="background:#ffffff0e;border:1px solid #ffffff22;border-radius:12px;padding:20px;text-align:center;color:#888;">
+      🔒 Reach <b style="color:#f5c400;">Wave 10</b> to unlock the Custom Skeleton Lab and design your own undead minion!
+    </div>
+    <div id="skel-lab-content" style="display:none;">
+      <div style="margin-bottom:12px;display:flex;gap:8px;align-items:center;flex-wrap:wrap;">
+        <span style="font-size:0.8rem;color:#aaa;">⚡ Quick Start:</span>
+        <button class="sl-preset" onclick="applySkelPreset('swarm')" style="padding:5px 12px;border-radius:8px;border:1px solid #c0392b66;background:#c0392b22;color:#ff9b8a;font-size:0.78rem;cursor:pointer;">🦴 Swarmling</button>
+        <button class="sl-preset" onclick="applySkelPreset('tank')" style="padding:5px 12px;border-radius:8px;border:1px solid #5DCAA566;background:#5DCAA522;color:#9fe1cb;font-size:0.78rem;cursor:pointer;">🛡️ Bonewall</button>
+        <button class="sl-preset" onclick="applySkelPreset('brute')" style="padding:5px 12px;border-radius:8px;border:1px solid #f5c40066;background:#f5c40022;color:#f5d77a;font-size:0.78rem;cursor:pointer;">💪 Brute</button>
+        <button class="sl-preset" onclick="applySkelPreset('reaper')" style="padding:5px 12px;border-radius:8px;border:1px solid #9650ff88;background:linear-gradient(90deg,#9650ff33,#c0392b33);color:#c9a0ff;font-size:0.78rem;cursor:pointer;font-weight:700;">☠️ Doom Reaper</button>
+        <button class="sl-preset" onclick="applySkelPreset('bomber')" style="padding:5px 12px;border-radius:8px;border:1px solid #ff6b0066;background:#ff6b0022;color:#ffb085;font-size:0.78rem;cursor:pointer;">💣 Bomb Squad</button>
+        <button class="sl-preset" onclick="applySkelPreset('hydra')" style="padding:5px 12px;border-radius:8px;border:1px solid #2ecc7166;background:#2ecc7122;color:#90e0b0;font-size:0.78rem;cursor:pointer;">🐲 Hydra</button>
+        <button class="sl-preset" onclick="applySkelPreset('ghost')" style="padding:5px 12px;border-radius:8px;border:1px solid #aaaaff66;background:#aaaaff22;color:#c4c4ff;font-size:0.78rem;cursor:pointer;">👻 Wraith</button>
+      </div>
+      <div style="background:#ffffff0e;border:1px solid #c0392b55;border-radius:12px;padding:16px;">
+        <div style="display:flex;gap:16px;flex-wrap:wrap;align-items:flex-start;">
+          <div style="flex:1;min-width:240px;">
+            <div style="margin-bottom:10px;">
+              <label style="font-size:0.8rem;color:#aaa;display:block;margin-bottom:4px;">Name</label>
+              <input id="sl-name" type="text" maxlength="14" value="My Skeleton" style="width:100%;padding:7px;border-radius:6px;border:1px solid #ffffff33;background:#ffffff10;color:#fff;font-size:0.9rem;">
+            </div>
+            <div class="pl-slider"><span>❤️ Health: <b id="sl-hp-val">500</b></span><input id="sl-hp" type="range" min="50" max="100000000" step="1000" value="500"></div>
+            <div class="pl-slider"><span>🏃 Speed: <b id="sl-speed-val">0.5</b></span><input id="sl-speed" type="range" min="5" max="200" step="1" value="50"></div>
+            <div class="pl-slider"><span>⚔️ Attack Damage: <b id="sl-dmg-val">50</b></span><input id="sl-dmg" type="range" min="10" max="100000" step="50" value="50"></div>
+            <div class="pl-slider"><span>💚 Regen (HP/sec): <b id="sl-regen-val">0</b></span><input id="sl-regen" type="range" min="0" max="500000" step="1000" value="0"></div>
+            <div class="pl-slider"><span>🛡️ Armor (% dmg resist): <b id="sl-armor-val">0%</b></span><input id="sl-armor" type="range" min="0" max="90" step="5" value="0"></div>
+            <div class="pl-slider"><span>👥 Swarm Count: <b id="sl-count-val">1</b></span><input id="sl-count" type="range" min="1" max="10" step="1" value="1"></div>
+            <div style="margin-top:10px;">
+              <label style="font-size:0.8rem;color:#aaa;display:block;margin-bottom:4px;">💥 Special Ability</label>
+              <select id="sl-ability" style="width:100%;padding:7px;border-radius:6px;border:1px solid #ffffff33;background:#2a1a1a;color:#fff;font-size:0.85rem;">
+                <option value="none">None</option>
+                <option value="berserk">🔥 Berserk — speeds up as it loses HP</option>
+                <option value="explosive">💣 Explosive — damages Porgs on death</option>
+                <option value="splitter">🧬 Splitter — spawns 2 minions on death</option>
+                <option value="shielded">❄️ Shielded — immune to freeze &amp; slow</option>
+                <option value="leech">🩸 Leech — heals when attacking Porgs</option>
+                <option value="phantom">👻 Phantom — 30% chance to dodge hits</option>
+              </select>
+            </div>
+          </div>
+          <div style="flex:1;min-width:200px;">
+            <label style="font-size:0.8rem;color:#aaa;display:block;margin-bottom:4px;">Skeleton Emoji</label>
+            <div id="sl-emoji-row" style="display:flex;flex-wrap:wrap;gap:4px;margin-bottom:12px;"></div>
+            <div style="margin-top:10px;padding:10px;background:radial-gradient(circle at 50% 40%,#2a0d0d,#1a0a1a);border-radius:8px;text-align:center;border:1px solid #ffffff15;">
+              <div style="font-size:0.72rem;color:#888;margin-bottom:4px;">Live Preview</div>
+              <div id="sl-preview" style="font-size:2.4rem;line-height:1;height:50px;display:flex;align-items:center;justify-content:center;">💀</div>
+              <div id="sl-preview-stats" style="font-size:0.74rem;color:#ff8888;margin-top:4px;">—</div>
+            </div>
+            <div style="margin-top:10px;padding:8px;background:#ffffff08;border-radius:8px;">
+              <div style="font-size:0.78rem;color:#aaa;display:flex;justify-content:space-between;">
+                <span>Threat Rating</span><b id="sl-power-label" style="color:#ff6b6b;">—</b>
+              </div>
+              <div style="height:8px;background:#ffffff15;border-radius:4px;margin-top:4px;overflow:hidden;">
+                <div id="sl-power-bar" style="height:100%;width:0%;background:linear-gradient(90deg,#ff6b6b,#9650ff,#000);transition:width 0.2s;"></div>
+              </div>
+            </div>
+          </div>
+        </div>
+        <div style="margin-top:14px;display:flex;align-items:center;justify-content:space-between;flex-wrap:wrap;gap:10px;">
+          <div style="font-size:0.85rem;color:#aaa;">⚡ Versus Energy Cost: <b id="sl-cost" style="color:#f5c400;">⚡ 0</b> · Lab Fee: <b id="sl-fee" style="color:#90EE90;">🌱 1,000 seeds</b></div>
+          <button class="lobby-btn" style="width:auto;padding:10px 24px;background:#c0392b;" onclick="saveCustomSkel()">💾 Save Custom Skeleton</button>
+        </div>
+        <div style="font-size:0.72rem;color:#777;margin-top:8px;">💡 Your custom skeletons appear in the <b>Versus mode</b> skeleton commander panel — deploy them against the Porg defender!</div>
+        <div id="sl-saved" style="margin-top:14px;"></div>
+      </div>
+    </div>
+  </div>
+  <div style="text-align:center;margin-top:16px;">
+    <button class="lobby-btn" onclick="startGame()">⚔️ Enter Battle (Solo)</button>
+    <button class="lobby-btn" onclick="startSoloSkeleton()" style="background:#c0392b;margin-top:8px;">💀 Play as Skeletons (Solo vs AI)</button>
+    <div style="margin-top:10px;font-size:0.78rem;color:#666;" id="lobby-note">Complete wave 10 to unlock the Lobby between runs!</div>
+  </div>
+
+  <!-- MULTIPLAYER -->
+  <div class="lobby-section" style="max-width:560px;margin:24px auto 0;">
+    <h2 style="color:#5DCAA5;">🌐 Online Multiplayer (2 Players)</h2>
+    <div style="background:#ffffff0e;border:1px solid #ffffff22;border-radius:12px;padding:16px;">
+      <p style="font-size:0.82rem;color:#aaa;margin-bottom:12px;line-height:1.4;">
+        Play with a friend on another computer! <b style="color:#5DCAA5;">Co-op:</b> defend the lawn together. <b style="color:#ff6b6b;">Versus:</b> one player commands the Porgs, the other plays as the Skeleton invaders!
+      </p>
+      <div id="mp-idle">
+        <div style="display:flex;gap:10px;flex-wrap:wrap;justify-content:center;">
+          <button class="lobby-btn" style="width:auto;padding:12px 20px;background:#1D9E75;" onclick="mpHost()">🏠 Host Game</button>
+          <button class="lobby-btn" style="width:auto;padding:12px 20px;background:#378ADD;" onclick="mpShowJoin()">🔗 Join Game</button>
+        </div>
+        <div id="mp-join-box" style="display:none;margin-top:12px;text-align:center;">
+          <input id="mp-code-input" placeholder="Enter room code" style="padding:10px;border-radius:8px;border:1px solid #ffffff33;background:#2a2a3e;color:#fff;font-size:1rem;text-align:center;text-transform:uppercase;width:180px;letter-spacing:2px;">
+          <button class="lobby-btn" style="width:auto;padding:10px 18px;margin-left:8px;background:#378ADD;" onclick="mpJoin()">Connect</button>
+        </div>
+      </div>
+      <div id="mp-hosting" style="display:none;text-align:center;">
+        <div style="font-size:0.82rem;color:#aaa;margin-bottom:6px;">Share this room code with your friend:</div>
+        <div id="mp-room-code" style="font-size:1.8rem;font-weight:700;color:#f5c400;letter-spacing:4px;font-family:monospace;background:#00000033;padding:10px;border-radius:8px;">------</div>
+        <button onclick="mpCopyCode()" style="margin-top:8px;font-size:0.75rem;padding:5px 12px;background:#444;border:none;color:#fff;border-radius:6px;cursor:pointer;">📋 Copy Code</button>
+        <div id="mp-status" style="margin-top:10px;font-size:0.85rem;color:#5DCAA5;">⏳ Waiting for player to join...</div>
+        <button onclick="mpCancel()" style="margin-top:8px;font-size:0.75rem;padding:5px 12px;background:#c0392b;border:none;color:#fff;border-radius:6px;cursor:pointer;">✕ Cancel</button>
+      </div>
+      <div id="mp-connected" style="display:none;text-align:center;">
+        <div style="font-size:1rem;color:#5DCAA5;font-weight:600;">✅ Connected!</div>
+        <div id="mp-role" style="font-size:0.82rem;color:#aaa;margin:6px 0;"></div>
+        <div id="mp-mode-select" style="margin:12px 0;">
+          <div style="font-size:0.8rem;color:#aaa;margin-bottom:8px;">Choose game mode (host picks):</div>
+          <div style="display:flex;gap:10px;justify-content:center;flex-wrap:wrap;">
+            <button class="lobby-btn mp-mode-btn" id="mp-mode-coop" style="width:auto;padding:10px 18px;background:#1D9E75;" onclick="mpSetMode('coop')">🤝 Co-op</button>
+            <button class="lobby-btn mp-mode-btn" id="mp-mode-versus" style="width:auto;padding:10px 18px;background:#555;" onclick="mpSetMode('versus')">⚔️ Versus</button>
+          </div>
+          <div id="mp-mode-desc" style="font-size:0.74rem;color:#888;margin-top:8px;">🤝 Co-op: both defend together, sharing sun.</div>
+        </div>
+        <button class="lobby-btn" id="mp-start-btn" style="width:auto;padding:12px 28px;margin-top:6px;background:#1D9E75;" onclick="mpStartGame()">⚔️ Start Battle</button>
+        <button onclick="mpCancel()" style="display:block;margin:10px auto 0;font-size:0.75rem;padding:5px 12px;background:#c0392b;border:none;color:#fff;border-radius:6px;cursor:pointer;">✕ Disconnect</button>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- GAME -->
+<div id="game-wrapper">
+  <div id="top-bar">
+    <div id="sun-count">☀️ <span id="sun-val">150</span></div>
+    <div id="seeds-count">🌱 <span id="seeds-val">0</span></div>
+    <div class="shop-card selected" data-type="quickporg"><span class="emoji">🐤</span><span>Quick</span><span class="cost">💰25</span></div>
+    <div class="shop-card" data-type="shooter"><span class="emoji">🐦</span><span>Shooter</span><span class="cost">💰100</span></div>
+    <div class="shop-card" data-type="wall"><span class="emoji">🥚</span><span>Wall</span><span class="cost">💰50</span></div>
+    <div class="shop-card" data-type="bomber"><span class="emoji">🐣</span><span>Bomber</span><span class="cost">💰175</span></div>
+    <div class="shop-card" data-type="sunporg"><span class="emoji">🌟</span><span>Sun</span><span class="cost">💰75</span></div>
+    <div class="shop-card" data-type="suncollector"><span class="emoji">🌻</span><span>Sun Collector</span><span class="cost">💰150</span></div>
+    <div class="shop-card" data-type="porgspawner"><span class="emoji">🥚</span><span>Porg Spawner</span><span class="cost">💰100K</span></div>
+    <div class="shop-card grape" data-type="grapes"><span class="emoji">🍇</span><span>Grapes</span><span class="cost">💰125</span></div>
+    <div class="shop-card octo" data-type="octopus"><span class="emoji">🐙</span><span>Octopus</span><span class="cost">💰300</span></div>
+    <div class="shop-card cosmic" data-type="astroflora"><span class="emoji">🌸</span><span>Astro</span><span class="cost">💰350</span></div>
+    <div class="shop-card" data-type="bloodvine"><span class="emoji">🌿</span><span>BloodVine</span><span class="cost">💰1000</span></div>
+    <div class="shop-card dive" data-type="diveporg"><span class="emoji">🦅</span><span>Dive</span><span class="cost">💰250</span></div>
+    <div class="shop-card ultra" data-type="coop"><span class="emoji">🏠</span><span>Ω Coop</span><span class="cost">💰2000</span></div>
+    <div class="shop-card op" data-type="starporg"><span class="emoji">✨</span><span>Star</span><span class="cost">💰700</span></div>
+    <div class="shop-card ultra" data-type="omegaporg"><span class="emoji">🌀</span><span>Omega</span><span class="cost">💰1500</span></div>
+    <span id="custom-porg-cards"></span>
+    <div class="shop-card remove-card" data-type="__remove__"><span class="emoji">⛏️</span><span>Remove</span><span class="refund">+50%</span></div>
+    <div id="status-bar">Wave: <span id="wave-num">1/10000</span> | Lives: <span id="lives-val">5</span> | <button id="speed-btn" onclick="cycleSpeed()" style="font-size:10px;padding:2px 8px;background:#378ADD;border:none;color:#fff;border-radius:4px;cursor:pointer;font-weight:600;">⏩ 1×</button> <button id="autoupg-btn" onclick="toggleAutoUpgrade()" style="font-size:10px;padding:2px 8px;background:#555;border:none;color:#fff;border-radius:4px;cursor:pointer;font-weight:600;">🔼 Auto: OFF</button></div>
+  </div>
+  <div id="upgrade-panel">
+    <span id="upgrade-info"></span>
+    <button id="upgrade-btn" onclick="doUpgrade()"></button>
+    <button onclick="closeUpgrade()" style="font-size:10px;padding:3px 8px;background:#555;border:none;color:#fff;border-radius:4px;cursor:pointer;">✕</button>
+  </div>
+  <div id="canvas-container">
+    <canvas id="canvas"></canvas>
+    <div id="msg-overlay">
+      <div id="msg-text">Porgs vs Skeletons</div>
+      <div id="msg-sub"></div>
+      <div style="display:flex;gap:10px;margin-top:4px;">
+        <button id="msg-btn">Start Game</button>
+        <button id="msg-btn2" onclick="goToLobby()">🏠 Go to Lobby</button>
+      </div>
+    </div>
+  </div>
+</div>
+
+<script src="https://cdnjs.cloudflare.com/ajax/libs/peerjs/1.5.4/peerjs.min.js"></script>
+<script>
+// ========== PERSISTENT STATE ==========
+let globalState = {
+  highestWave: 0,
+  totalDamage: 0,
+  totalKills: 0,
+  seeds: 0,
+  unlockedUnits: ['quickporg','shooter','wall','bomber','sunporg','suncollector','porgspawner'],
+  powerUps: {},
+  customPorgs: [],
+  customSkels: [],
+  prefSpeed: 1,
+  autoUpgrade: false,
+};
+
+// LOBBY UNLOCKS
+const UNIT_UNLOCKS = [
+  {id:'grapes',      emoji:'🍇', name:'Grapes',     desc:'Bouncing grape projectiles that chain between enemies',cost:200,  unlocked:true},
+  {id:'octopus',     emoji:'🐙', name:'Octopus',    desc:'Ink blasts hit multiple rows, slowing all enemies hit',cost:500,  unlocked:false},
+  {id:'astroflora',  emoji:'🌸', name:'Astroflora', desc:'Freezes all nearby enemies and deals area damage',    cost:800,  unlocked:false},
+  {id:'bloodvine',   emoji:'🌿', name:'Blood Vine', desc:'AoE damage + slows enemies within a wide range',      cost:600,  unlocked:false},
+  {id:'diveporg',    emoji:'🦅', name:'Dive Porg',  desc:'Flies to target, invulnerable mid-flight, AOE impact',cost:700,  unlocked:false},
+  {id:'starporg',    emoji:'✨', name:'Star Porg',  desc:'Lightning strikes up to 3 enemies anywhere on board', cost:1500, unlocked:false},
+  {id:'coop',        emoji:'🏠', name:'Omega Coop', desc:'Spawns a free Omega Porg every 60 seconds',           cost:3000, unlocked:false},
+  {id:'omegaporg',   emoji:'🌀', name:'Omega Porg', desc:'Obliterates all enemies within huge radius every 0.5s',cost:2500, unlocked:false},
+];
+
+const POWER_UNLOCKS = [
+  {id:'extra_lives',   emoji:'❤️',  name:'Extra Lives',    desc:'+2 starting lives per run', cost:300,  max:5},
+  {id:'start_sun',     emoji:'☀️',  name:'Sun Boost',      desc:'+100 starting sun per run',  cost:400,  max:6},
+  {id:'wave_reward',   emoji:'💰',  name:'Wave Bonus',     desc:'+25 sun per wave cleared',   cost:500,  max:6},
+  {id:'seed_boost',    emoji:'🌱',  name:'Seed Multiplier',desc:'Earn seeds 50% faster',      cost:600,  max:4},
+  {id:'global_dmg',    emoji:'⚔️',  name:'Porg Power',     desc:'+10% damage for all Porgs',  cost:800,  max:10},
+  {id:'global_speed',  emoji:'⚡',  name:'Rapid Fire',     desc:'+10% fire rate for all Porgs',cost:800,  max:10},
+  {id:'global_hp',     emoji:'🛡️',  name:'Porg Vitality',  desc:'+15% HP for all Porgs',      cost:700,  max:8},
+  {id:'sun_regen',     emoji:'🌞',  name:'Passive Sun',    desc:'+1 sun/sec passive income',  cost:900,  max:10},
+  {id:'cheaper_upg',   emoji:'🔧',  name:'Discount Upgrades',desc:'-8% Porg upgrade cost',    cost:1000, max:5},
+  {id:'crit_chance',   emoji:'💥',  name:'Critical Strike',desc:'+5% chance to deal 3x damage',cost:1200, max:6},
+];
+
+let _saveTimer=null;
+function saveState(){
+  // Debounce: only write localStorage every 5 seconds to avoid perf hit
+  if(_saveTimer) return;
+  _saveTimer=setTimeout(()=>{
+    try{localStorage.setItem('pvs_state',JSON.stringify(globalState));}catch(e){}
+    _saveTimer=null;
+  },5000);
+}
+function saveStateNow(){
+  if(_saveTimer){clearTimeout(_saveTimer);_saveTimer=null;}
+  try{localStorage.setItem('pvs_state',JSON.stringify(globalState));}catch(e){}
+}
+function loadState(){try{let s=localStorage.getItem('pvs_state');if(s)globalState={...globalState,...JSON.parse(s)};}catch(e){}}
+loadState();
+
+// ===== ACTIVE RUN PERSISTENCE (sessionStorage) =====
+// Saves the in-progress game so closing/reopening the file resumes it.
+// sessionStorage clears when the browser is fully closed or the computer is shut down,
+// so a full shutdown starts a fresh game while a simple reopen resumes.
+let _runSaveTimer=null;
+function saveRun(){
+  if(_runSaveTimer) return;
+  _runSaveTimer=setTimeout(saveRunNow,2000);
+}
+function saveRunNow(){
+  if(_runSaveTimer){clearTimeout(_runSaveTimer);_runSaveTimer=null;}
+  try{
+    if(!started || gameOver){sessionStorage.removeItem('pvs_run');return;}
+    // Serialize only the essential, lightweight state
+    let snapshot={
+      sun,lives,wave,started,gameOver,
+      waveActive,waveTimer,spawnIndex,
+      spawnList,
+      cells:cells.map(row=>row.map(p=>p?{type:p.type,level:p.level||0,hp:p.hp,timer:p.timer||0}:null)),
+      skeletons:skeletons.map(s=>({row:s.row,x:s.x,y:s.y,hp:s.hp,maxHp:s.maxHp,type:s.type,
+        speed:s.speed,baseSpeed:s.baseSpeed,attackTimer:s.attackTimer||0,slamTimer:s.slamTimer||0,
+        frozen:s.frozen||0,inked:s.inked||0,slowed:s.slowed||0})),
+      seedAccum,
+      ts:Date.now(),
+    };
+    sessionStorage.setItem('pvs_run',JSON.stringify(snapshot));
+  }catch(e){}
+}
+function clearRun(){
+  if(_runSaveTimer){clearTimeout(_runSaveTimer);_runSaveTimer=null;}
+  try{sessionStorage.removeItem('pvs_run');}catch(e){}
+}
+function hasSavedRun(){
+  try{return !!sessionStorage.getItem('pvs_run');}catch(e){return false;}
+}
+function restoreRun(){
+  try{
+    let raw=sessionStorage.getItem('pvs_run');
+    if(!raw) return false;
+    let snap=JSON.parse(raw);
+    if(!snap || !snap.started || snap.gameOver) return false;
+    // Restore scalar state
+    sun=snap.sun; lives=snap.lives; wave=snap.wave;
+    started=true; gameOver=false;
+    waveActive=snap.waveActive; waveTimer=snap.waveTimer||0; spawnIndex=snap.spawnIndex||0;
+    spawnList=snap.spawnList||[];
+    seedAccum=snap.seedAccum||0;
+    // Rebuild cells (full plant objects)
+    cells=Array.from({length:ROWS},()=>Array(COLS).fill(null));
+    diveUnits=[];
+    if(snap.cells){
+      for(let r=0;r<ROWS;r++)for(let c=0;c<COLS;c++){
+        let pp=snap.cells[r]&&snap.cells[r][c];
+        if(pp){
+          cells[r][c]={type:pp.type,level:pp.level||0,hp:pp.hp,timer:pp.timer||0,hitFlash:0};
+          if(pp.type==='diveporg')createDiveUnit(c,r);
+        }
+      }
+    }
+    // Rebuild skeletons (re-derive emoji/size/flags from SKELS type)
+    skeletons=[];
+    if(snap.skeletons){
+      for(let s of snap.skeletons){
+        let t=SKELS[s.type]||SKELS[0];
+        skeletons.push({row:s.row,x:s.x,y:s.y,hp:s.hp,maxHp:s.maxHp,
+          speed:s.speed,baseSpeed:s.baseSpeed||t.speed,reward:t.reward,emoji:t.emoji,size:t.size,type:s.type,
+          attackTimer:s.attackTimer||0,hitFlash:0,slowed:s.slowed||0,frozen:s.frozen||0,inked:s.inked||0,
+          isKing:!!t.isKing,isLich:!!t.isLich,isReaper:!!t.isReaper,isTitan:!!t.isTitan,isColossus:!!t.isColossus,isSerpent:!!t.isSerpent,isNightmare:!!t.isNightmare,regen:t.regen||0,
+          voidPulse:0,titanPulse:0,colossusPulse:0,serpentPulse:0,nightmarePulse:0,slamTimer:s.slamTimer||0});
+      }
+    }
+    // reset transient effect arrays
+    projectiles=[];suns=[];explosions=[];bloodParticles=[];starBeams=[];omegaRings=[];
+    voidCracks=[];inkSplats=[];grapeBounces=[];titanShockwaves=[];removeParticles=[];megaRunners=[];
+    frameCount=0;
+    gameSpeed=globalState.prefSpeed||1;
+    return true;
+  }catch(e){return false;}
+}
+
+// Start with grapes always unlocked
+if(!globalState.unlockedUnits.includes('grapes')) globalState.unlockedUnits.push('grapes');
+
+// ========== LOBBY ==========
+function updateLobbyUI(){
+  document.getElementById('lb-wave').textContent=globalState.highestWave;
+  document.getElementById('lb-damage').textContent=globalState.totalDamage.toLocaleString();
+  document.getElementById('lb-kills').textContent=globalState.totalKills.toLocaleString();
+  document.getElementById('lb-seeds').textContent=globalState.seeds+' 🌱';
+  document.getElementById('lb-seeds2').textContent=globalState.seeds+' 🌱 Seeds';
+  document.getElementById('lobby-note').textContent=
+    globalState.highestWave>=10?'✅ Lobby unlocked — you can return here after any wave!':'⚠️ Complete wave 10 to unlock the Lobby between waves.';
+  renderUnlockGrid();
+  renderPowerGrid();
+  renderPorgLab();
+  renderSkelLab();
+}
+
+function renderUnlockGrid(){
+  const grid=document.getElementById('unlock-grid');
+  grid.innerHTML='';
+  for(let u of UNIT_UNLOCKS){
+    let owned=globalState.unlockedUnits.includes(u.id);
+    let div=document.createElement('div');
+    div.className='lobby-card'+(owned?' owned':'');
+    div.innerHTML=`<div class="lc-emoji">${u.emoji}</div><div class="lc-name">${u.name}</div><div class="lc-desc">${u.desc}</div>`+
+      (owned?`<div class="lc-owned">✓ Unlocked</div>`:`<div class="lc-cost seeds">🌱 ${u.cost} seeds</div>`);
+    if(!owned) div.onclick=()=>buyUnlock(u);
+    grid.appendChild(div);
+  }
+}
+
+function renderPowerGrid(){
+  const grid=document.getElementById('upgrade-grid');
+  grid.innerHTML='';
+  for(let p of POWER_UNLOCKS){
+    let lvl=globalState.powerUps[p.id]||0;
+    let maxed=lvl>=p.max;
+    let div=document.createElement('div');
+    div.className='lobby-card'+(maxed?' owned':'');
+    div.innerHTML=`<div class="lc-emoji">${p.emoji}</div><div class="lc-name">${p.name} ${lvl>0?'(Lv'+lvl+'/'+p.max+')':''}</div><div class="lc-desc">${p.desc}</div>`+
+      (maxed?`<div class="lc-owned">✓ MAX</div>`:`<div class="lc-cost seeds">🌱 ${p.cost*(lvl+1)} seeds</div>`);
+    if(!maxed) div.onclick=()=>buyPower(p);
+    grid.appendChild(div);
+  }
+}
+
+function buyUnlock(u){
+  if(globalState.unlockedUnits.includes(u.id)) return;
+  if(globalState.seeds<u.cost){alert('Not enough seeds! Need '+u.cost+' 🌱');return;}
+  globalState.seeds-=u.cost;
+  globalState.unlockedUnits.push(u.id);
+  saveStateNow(); updateLobbyUI();
+}
+
+function buyPower(p){
+  let lvl=globalState.powerUps[p.id]||0;
+  if(lvl>=p.max) return;
+  let cost=p.cost*(lvl+1);
+  if(globalState.seeds<cost){alert('Not enough seeds! Need '+cost+' 🌱');return;}
+  globalState.seeds-=cost;
+  globalState.powerUps[p.id]=(lvl+1);
+  saveStateNow(); updateLobbyUI();
+}
+
+// ========== CUSTOM PORG LAB ==========
+const PL_EMOJIS=['🦜','🦆','🦢','🦤','🦅','🦉','🐧','🦩','🐔','🦚','🕊️','🦇','🐉','🔥','⚡','❄️','🌟','💫','👾','🤖','🦖','🦕','🐲','👹','👺','🦂','🕷️','🦟','🐺','🦁','🐯','🦊'];
+const PL_PROJECTILES=['⭐','🔥','❄️','⚡','💧','🌟','💫','☄️','🪨','🟣','🟢','💠','🔮','🌀','💥','☠️'];
+let plSelectedEmoji='🦜';
+let plSelectedProj='⭐';
+
+// Ability metadata: cost weight + description
+const PL_ABILITIES={
+  none:   {label:'Normal Shot', cost:0},
+  splash: {label:'Splash', cost:20},
+  sun:    {label:'Sun Generator', cost:30},
+  freeze: {label:'Cryo', cost:30},
+  chain:  {label:'Chain Lightning', cost:40},
+  poison: {label:'Toxic', cost:30},
+  pierce: {label:'Piercing', cost:35},
+  vampiric:{label:'Vampiric', cost:40},
+  slowfield:{label:'Slow Field', cost:30},
+};
+
+// Compute the sun cost of a custom porg from its stats — powerful builds cost real sun
+function computePorgCost(cfg){
+  let abilCost=((PL_ABILITIES[cfg.ability]||PL_ABILITIES.none).cost)*4;
+  let cost = Math.round((
+    cfg.hp*0.02 +
+    cfg.dmg*0.08 +
+    Math.max(0,(120-cfg.rate))*4 +
+    cfg.range*20 +
+    (cfg.pspeed-4)*30 +
+    (cfg.armor||0)*8 +
+    (cfg.regen||0)*0.03 +
+    abilCost
+  )*0.5);
+  return Math.max(50, Math.min(cost, 2500000)); // half price
+}
+
+// Power rating 0-100 for the UI bar
+function computePorgPower(cfg){
+  let dps=cfg.dmg*(60/Math.max(2,cfg.rate));
+  let abil=(PL_ABILITIES[cfg.ability]||PL_ABILITIES.none).cost;
+  let armorMult=1/(1-(cfg.armor||0)/100); // effective HP multiplier
+  let regenBonus=(cfg.regen||0)*0.02;
+  let raw=cfg.hp*0.0005*armorMult + dps*0.02 + cfg.range*10 + (cfg.pspeed-4)*8 + abil*0.6 + regenBonus;
+  return Math.max(2,Math.min(100,Math.round(raw/50)));
+}
+
+function renderPorgLab(){
+  let unlocked = globalState.highestWave>=10;
+  document.getElementById('porg-lab-locked').style.display = unlocked?'none':'block';
+  document.getElementById('porg-lab-content').style.display = unlocked?'block':'none';
+  if(!unlocked) return;
+
+  // Build body emoji picker once
+  let row=document.getElementById('pl-emoji-row');
+  if(row && row.children.length===0){
+    PL_EMOJIS.forEach(em=>{
+      let b=document.createElement('div');
+      b.className='pl-emoji-btn'+(em===plSelectedEmoji?' sel':'');
+      b.textContent=em;
+      b.onclick=()=>{plSelectedEmoji=em;[...row.children].forEach(x=>x.classList.remove('sel'));b.classList.add('sel');if(window._plRefresh)window._plRefresh();};
+      row.appendChild(b);
+    });
+  }
+
+  // Build projectile picker once
+  let prow=document.getElementById('pl-proj-row');
+  if(prow && prow.children.length===0){
+    PL_PROJECTILES.forEach(em=>{
+      let b=document.createElement('div');
+      b.className='pl-emoji-btn'+(em===plSelectedProj?' sel':'');
+      b.textContent=em;
+      b.onclick=()=>{plSelectedProj=em;[...prow.children].forEach(x=>x.classList.remove('sel'));b.classList.add('sel');if(window._plRefresh)window._plRefresh();};
+      prow.appendChild(b);
+    });
+  }
+
+  // Wire up sliders to live-update labels + cost + power
+  const hp=document.getElementById('pl-hp'), dmg=document.getElementById('pl-dmg'),
+        rate=document.getElementById('pl-rate'), range=document.getElementById('pl-range'),
+        pspeed=document.getElementById('pl-pspeed'), ability=document.getElementById('pl-ability'),
+        armor=document.getElementById('pl-armor'), regen=document.getElementById('pl-regen');
+  function refresh(){
+    document.getElementById('pl-hp-val').textContent=fmtBig(+hp.value);
+    document.getElementById('pl-dmg-val').textContent=fmtBig(+dmg.value);
+    document.getElementById('pl-rate-val').textContent=rate.value;
+    document.getElementById('pl-range-val').textContent=range.value==='9'?'full row':range.value+' cells';
+    document.getElementById('pl-pspeed-val').textContent=pspeed.value;
+    document.getElementById('pl-armor-val').textContent=armor.value+'%';
+    document.getElementById('pl-regen-val').textContent=fmtBig(+regen.value);
+    let cfg={hp:+hp.value,dmg:+dmg.value,rate:+rate.value,range:+range.value,pspeed:+pspeed.value,ability:ability.value,armor:+armor.value,regen:+regen.value};
+    document.getElementById('pl-cost').textContent='☀️ '+computePorgCost(cfg).toLocaleString();
+    let liveFee=1000+(globalState.customPorgs?globalState.customPorgs.length:0)*500;
+    let feeEl=document.getElementById('pl-fee');
+    if(feeEl) feeEl.textContent='🌱 '+liveFee.toLocaleString()+' seeds';
+    let pow=computePorgPower(cfg);
+    document.getElementById('pl-power-bar').style.width=pow+'%';
+    let plabel=pow<25?'Weak':pow<50?'Solid':pow<75?'Strong':pow<90?'Elite':'GODLIKE';
+    document.getElementById('pl-power-label').textContent=plabel+' ('+pow+')';
+    // Live preview
+    let pvBody=document.getElementById('pl-preview-body');
+    let pvProj=document.getElementById('pl-preview-proj');
+    if(pvBody) pvBody.textContent=plSelectedEmoji;
+    if(pvProj) pvProj.textContent=cfg.ability==='sun'?'☀️':plSelectedProj;
+    let dps=Math.round(cfg.dmg*(60/Math.max(2,cfg.rate)));
+    let dpsEl=document.getElementById('pl-preview-dps');
+    if(dpsEl) dpsEl.textContent=cfg.ability==='sun'?'☀️ Sun income build':'DPS: '+fmtBig(dps)+(cfg.ability!=='none'?' + '+(PL_ABILITIES[cfg.ability]||{label:''}).label:'');
+  }
+  if(hp && !hp._wired){
+    [hp,dmg,rate,range,pspeed,ability,armor,regen].forEach(el=>{el.addEventListener('input',refresh);el._wired=true;});
+    refresh();
+  } else refresh();
+  window._plRefresh=refresh;
+
+  renderSavedPorgs();
+}
+
+// Quick-start presets fill the sliders with a ready-made build
+function applyPreset(kind){
+  const presets={
+    glass:  {hp:100, dmg:600, rate:30, range:9, pspeed:8, armor:0,  regen:0,   ability:'splash', name:'Glass Cannon', emoji:'🔥', proj:'☄️'},
+    tank:   {hp:5000,dmg:120, rate:50, range:3, pspeed:5, armor:60, regen:50,  ability:'slowfield',name:'Bruiser',     emoji:'🦁', proj:'🪨'},
+    sniper: {hp:300, dmg:400, rate:90, range:9, pspeed:12,armor:0,  regen:0,   ability:'pierce', name:'Sniper',       emoji:'🦅', proj:'⚡'},
+    support:{hp:600, dmg:60,  rate:60, range:9, pspeed:4, armor:20, regen:30,  ability:'sun',    name:'Support',      emoji:'🌟', proj:'🌟'},
+    immortal:{hp:8000,dmg:200,rate:45, range:4, pspeed:6, armor:50, regen:150, ability:'vampiric',name:'Immortal',    emoji:'🐢', proj:'💠'},
+    god:    {hp:500000,dmg:100000,rate:6,range:9,pspeed:18,armor:90,regen:50000,ability:'chain',name:'GOD PORG',emoji:'👑',proj:'🌟'},
+    serpentslayer:{hp:1000000,dmg:500000,rate:4,range:9,pspeed:20,armor:95,regen:100000,ability:'pierce',name:'Serpent Slayer',emoji:'⚡',proj:'💥'},
+  };
+  let pr=presets[kind]; if(!pr) return;
+  document.getElementById('pl-hp').value=pr.hp;
+  document.getElementById('pl-dmg').value=pr.dmg;
+  document.getElementById('pl-rate').value=pr.rate;
+  document.getElementById('pl-range').value=pr.range;
+  document.getElementById('pl-pspeed').value=pr.pspeed;
+  document.getElementById('pl-armor').value=pr.armor;
+  document.getElementById('pl-regen').value=pr.regen||0;
+  document.getElementById('pl-ability').value=pr.ability;
+  document.getElementById('pl-name').value=pr.name;
+  plSelectedEmoji=pr.emoji; plSelectedProj=pr.proj;
+  // refresh emoji/proj selection highlight
+  document.querySelectorAll('#pl-emoji-row .pl-emoji-btn').forEach(b=>b.classList.toggle('sel',b.textContent===pr.emoji));
+  document.querySelectorAll('#pl-proj-row .pl-emoji-btn').forEach(b=>b.classList.toggle('sel',b.textContent===pr.proj));
+  // trigger refresh
+  document.getElementById('pl-hp').dispatchEvent(new Event('input'));
+}
+
+function renderSavedPorgs(){
+  let div=document.getElementById('pl-saved');
+  if(!div) return;
+  if(globalState.customPorgs.length===0){div.innerHTML='<div style="font-size:0.78rem;color:#777;">No custom Porgs yet. Design one above!</div>';return;}
+  div.innerHTML='<div style="font-size:0.82rem;color:#aaa;margin-bottom:6px;">Your Custom Porgs ('+globalState.customPorgs.length+'/8 — usable in battle):</div>';
+  let grid=document.createElement('div');grid.style.cssText='display:flex;gap:8px;flex-wrap:wrap;';
+  const abilEmoji={none:'🎯',splash:'💥',sun:'☀️',freeze:'❄️',chain:'⚡',poison:'☠️',pierce:'🏹',vampiric:'🧛',slowfield:'🕸️'};
+  globalState.customPorgs.forEach((cp,i)=>{
+    let card=document.createElement('div');
+    card.style.cssText='background:#7F77DD18;border:1px solid #7F77DD55;border-radius:10px;padding:8px 10px;font-size:0.72rem;color:#ccc;position:relative;min-width:96px;';
+    let abil=cp.ability||(cp.splash?'splash':'none');
+    card.innerHTML=`<div style="font-size:1.4rem;text-align:center;">${cp.emoji}<span style="font-size:0.9rem;">${cp.proj||'⭐'}</span></div><div style="font-weight:600;color:#fff;text-align:center;">${cp.name}</div><div>❤️${fmtBig(cp.hp)} ⚔️${fmtBig(cp.dmg)}</div><div>${abilEmoji[abil]||'🎯'}${cp.armor?' 🛡️'+cp.armor+'%':''}${cp.regen?' 💚'+fmtBig(cp.regen):''} ☀️${cp.cost}</div>`;
+    let del=document.createElement('button');
+    del.textContent='✕';del.style.cssText='position:absolute;top:2px;right:2px;background:#c0392b;border:none;color:#fff;border-radius:4px;cursor:pointer;font-size:0.7rem;padding:1px 5px;';
+    del.onclick=()=>{globalState.customPorgs.splice(i,1);saveStateNow();renderPorgLab();};
+    card.appendChild(del);
+    grid.appendChild(card);
+  });
+  div.appendChild(grid);
+}
+
+function saveCustomPorg(){
+  if(globalState.highestWave<10) return;
+  if(globalState.customPorgs.length>=20){alert('Max 20 custom Porgs! Delete one first.');return;}
+  // Seed fee scales up with how many custom Porgs you already own
+  let fee=1000+globalState.customPorgs.length*500;
+  if(globalState.seeds<fee){alert('Need '+fee+' 🌱 seeds to build this custom Porg! (cost rises with each Porg you own)');return;}
+  let name=(document.getElementById('pl-name').value||'My Porg').slice(0,14);
+  let cfg={
+    hp:+document.getElementById('pl-hp').value,
+    dmg:+document.getElementById('pl-dmg').value,
+    rate:+document.getElementById('pl-rate').value,
+    range:+document.getElementById('pl-range').value,
+    pspeed:+document.getElementById('pl-pspeed').value,
+    ability:document.getElementById('pl-ability').value,
+    armor:+document.getElementById('pl-armor').value,
+    regen:+document.getElementById('pl-regen').value,
+  };
+  let cost=computePorgCost(cfg);
+  let id='custom_'+Date.now();
+  globalState.seeds-=fee;
+  globalState.customPorgs.push({id,name,emoji:plSelectedEmoji,proj:plSelectedProj,hp:cfg.hp,dmg:cfg.dmg,rate:cfg.rate,range:cfg.range,pspeed:cfg.pspeed,ability:cfg.ability,armor:cfg.armor,regen:cfg.regen,splash:cfg.ability==='splash',cost});
+  saveStateNow();
+  updateLobbyUI();
+  alert(`✅ "${name}" built! Find it in the shop during battle.`);
+}
+
+// ========================================================================
+// CUSTOM SKELETON LAB — design undead minions for Versus mode
+// ========================================================================
+const SL_EMOJIS=['💀','☠️','🦴','👹','👺','👿','😈','🧟','🧛','🦇','🐲','🐉','👾','💩','🦂','🕷️','🦟','🐺','🦝','🐗','🦨','🦔','🦛','🦏','👻','🤡','👽','🤖','🎃','🧌','🦹','⚰️'];
+const SL_ABILITIES={
+  none:{label:'None',cost:0},
+  berserk:{label:'🔥 Berserk',cost:80},
+  explosive:{label:'💣 Explosive',cost:120},
+  splitter:{label:'🧬 Splitter',cost:150},
+  shielded:{label:'❄️ Shielded',cost:100},
+  leech:{label:'🩸 Leech',cost:110},
+  phantom:{label:'👻 Phantom',cost:130},
+};
+let slSelectedEmoji='💀';
+
+// Versus energy cost for a custom skeleton based on stats
+function computeSkelCost(cfg){
+  let spd=cfg.speed/100; // slider 5-200 -> 0.05-2.0
+  let abilCost=(SL_ABILITIES[cfg.ability]||SL_ABILITIES.none).cost;
+  let armorMult=1/(1-(cfg.armor||0)/100); // armor makes effective HP higher
+  let cost=Math.round((
+    cfg.hp*0.00008*armorMult +
+    cfg.dmg*0.02 +
+    spd*200 +
+    (cfg.regen||0)*0.0008 +
+    abilCost
+  )*(cfg.count||1)); // swarm count multiplies total cost
+  return Math.max(10, Math.min(cost, 9999));
+}
+function computeSkelThreat(cfg){
+  let spd=cfg.speed/100;
+  let abil=(SL_ABILITIES[cfg.ability]||SL_ABILITIES.none).cost;
+  let armorMult=1/(1-(cfg.armor||0)/100);
+  let raw=cfg.hp*0.0001*armorMult + cfg.dmg*0.05 + spd*120 + (cfg.regen||0)*0.0006 + abil*0.5 + (cfg.count||1)*15;
+  return Math.max(2,Math.min(100,Math.round(raw/45)));
+}
+
+function renderSkelLab(){
+  let unlocked=globalState.highestWave>=10;
+  let locked=document.getElementById('skel-lab-locked');
+  let content=document.getElementById('skel-lab-content');
+  if(!locked||!content)return;
+  if(!unlocked){locked.style.display='block';content.style.display='none';return;}
+  locked.style.display='none';content.style.display='block';
+
+  // Build emoji picker once
+  let row=document.getElementById('sl-emoji-row');
+  if(row&&!row.dataset.built){
+    SL_EMOJIS.forEach(em=>{
+      let b=document.createElement('button');
+      b.className='pl-emoji-btn';b.textContent=em;
+      b.style.cssText='font-size:1.2rem;padding:3px 6px;border-radius:6px;border:2px solid transparent;background:#ffffff10;cursor:pointer;';
+      if(em===slSelectedEmoji)b.classList.add('sel');
+      b.onclick=()=>{slSelectedEmoji=em;[...row.children].forEach(x=>x.classList.remove('sel'));b.classList.add('sel');if(window._slRefresh)window._slRefresh();};
+      row.appendChild(b);
+    });
+    row.dataset.built='1';
+    // style for selected
+    let st=document.createElement('style');
+    st.textContent='.pl-emoji-btn.sel{border-color:#f5c400 !important;background:#f5c40022 !important;}';
+    document.head.appendChild(st);
+  }
+
+  // Wire sliders
+  let hp=document.getElementById('sl-hp'),speed=document.getElementById('sl-speed'),
+      dmg=document.getElementById('sl-dmg'),regen=document.getElementById('sl-regen'),
+      armor=document.getElementById('sl-armor'),count=document.getElementById('sl-count'),
+      ability=document.getElementById('sl-ability');
+  function refresh(){
+    let cfg={hp:+hp.value,speed:+speed.value,dmg:+dmg.value,regen:+regen.value,armor:+armor.value,count:+count.value,ability:ability.value};
+    document.getElementById('sl-hp-val').textContent=fmtBig(cfg.hp);
+    document.getElementById('sl-speed-val').textContent=(cfg.speed/100).toFixed(2);
+    document.getElementById('sl-dmg-val').textContent=fmtBig(cfg.dmg);
+    document.getElementById('sl-regen-val').textContent=fmtBig(cfg.regen);
+    document.getElementById('sl-armor-val').textContent=cfg.armor+'%';
+    document.getElementById('sl-count-val').textContent=cfg.count;
+    document.getElementById('sl-cost').textContent='⚡ '+computeSkelCost(cfg).toLocaleString();
+    let liveFee=1000+(globalState.customSkels?globalState.customSkels.length:0)*500;
+    let feeEl=document.getElementById('sl-fee');if(feeEl)feeEl.textContent='🌱 '+liveFee.toLocaleString()+' seeds';
+    let pow=computeSkelThreat(cfg);
+    document.getElementById('sl-power-bar').style.width=pow+'%';
+    let lbl=pow<25?'Weak':pow<50?'Menacing':pow<75?'Deadly':pow<90?'Terrifying':'APOCALYPTIC';
+    document.getElementById('sl-power-label').textContent=lbl+' ('+pow+')';
+    let pv=document.getElementById('sl-preview');if(pv)pv.textContent=slSelectedEmoji;
+    let pvs=document.getElementById('sl-preview-stats');
+    let abilLbl=(SL_ABILITIES[cfg.ability]||SL_ABILITIES.none).label;
+    if(pvs)pvs.innerHTML=`❤️${fmtBig(cfg.hp)} ⚔️${fmtBig(cfg.dmg)} 🏃${(cfg.speed/100).toFixed(2)}`+(cfg.armor?` 🛡️${cfg.armor}%`:'')+(cfg.regen?` 💚${fmtBig(cfg.regen)}`:'')+(cfg.count>1?` ×${cfg.count}`:'')+(cfg.ability!=='none'?`<br><span style="color:#c9a0ff;">${abilLbl}</span>`:'');
+  }
+  if(hp&&!hp._wired){
+    [hp,speed,dmg,regen,armor,count,ability].forEach(el=>{el.addEventListener('input',refresh);el._wired=true;});
+  }
+  window._slRefresh=refresh;
+  refresh();
+
+  // Render saved skeletons
+  let saved=document.getElementById('sl-saved');
+  if(saved){
+    saved.innerHTML='';
+    let list=globalState.customSkels||[];
+    if(list.length===0){saved.innerHTML='<div style="font-size:0.78rem;color:#666;">No custom skeletons yet. Design one above!</div>';}
+    list.forEach((cs,i)=>{
+      let card=document.createElement('div');
+      card.style.cssText='display:inline-block;background:#2a1a1a;border:1px solid #c0392b55;border-radius:8px;padding:8px;margin:4px;text-align:center;position:relative;min-width:90px;';
+      let abilIcon=cs.ability&&cs.ability!=='none'?(SL_ABILITIES[cs.ability]||{label:''}).label.split(' ')[0]:'';
+      card.innerHTML=`<div style="font-size:1.4rem;">${cs.emoji}${cs.count>1?'<span style="font-size:0.7rem;color:#c9a0ff;">×'+cs.count+'</span>':''}</div><div style="font-weight:600;color:#fff;font-size:0.8rem;">${cs.name}</div><div style="font-size:0.7rem;color:#ccc;">❤️${fmtBig(cs.hp)} ⚔️${fmtBig(cs.dmg)}</div><div style="font-size:0.7rem;color:#f5c400;">⚡${cs.cost}${cs.regen?' 💚':''}${cs.armor?' 🛡️':''} ${abilIcon}</div>`;
+      let del=document.createElement('button');
+      del.textContent='✕';del.style.cssText='position:absolute;top:2px;right:2px;background:#c0392b;border:none;color:#fff;border-radius:50%;width:18px;height:18px;font-size:0.7rem;cursor:pointer;line-height:1;';
+      del.onclick=()=>{globalState.customSkels.splice(i,1);saveStateNow();renderSkelLab();};
+      card.appendChild(del);
+      saved.appendChild(card);
+    });
+  }
+}
+
+function applySkelPreset(kind){
+  const presets={
+    swarm: {hp:200,   speed:120, dmg:30,    regen:0,     armor:0,  count:5, ability:'none',     emoji:'🦴', name:'Swarmling'},
+    tank:  {hp:500000,speed:25,  dmg:200,   regen:5000,  armor:60, count:1, ability:'shielded', emoji:'🛡️', name:'Bonewall'},
+    brute: {hp:80000, speed:60,  dmg:5000,  regen:0,     armor:20, count:1, ability:'berserk',  emoji:'💪', name:'Brute'},
+    reaper:{hp:5000000,speed:90, dmg:50000, regen:100000,armor:50, count:1, ability:'leech',    emoji:'☠️', name:'Doom Reaper'},
+    bomber:{hp:30000, speed:80,  dmg:2000,  regen:0,     armor:0,  count:3, ability:'explosive',emoji:'💣', name:'Bomb Squad'},
+    hydra: {hp:200000,speed:50,  dmg:8000,  regen:10000, armor:30, count:1, ability:'splitter', emoji:'🐲', name:'Hydra'},
+    ghost: {hp:50000, speed:110, dmg:12000, regen:0,     armor:0,  count:2, ability:'phantom',  emoji:'👻', name:'Wraith'},
+  };
+  let pr=presets[kind];if(!pr)return;
+  document.getElementById('sl-hp').value=pr.hp;
+  document.getElementById('sl-speed').value=pr.speed;
+  document.getElementById('sl-dmg').value=pr.dmg;
+  document.getElementById('sl-regen').value=pr.regen;
+  document.getElementById('sl-armor').value=pr.armor;
+  document.getElementById('sl-count').value=pr.count;
+  document.getElementById('sl-ability').value=pr.ability;
+  document.getElementById('sl-name').value=pr.name;
+  slSelectedEmoji=pr.emoji;
+  document.querySelectorAll('#sl-emoji-row .pl-emoji-btn').forEach(b=>b.classList.toggle('sel',b.textContent===pr.emoji));
+  if(window._slRefresh)window._slRefresh();
+}
+
+function saveCustomSkel(){
+  if(globalState.highestWave<10)return;
+  if(!globalState.customSkels)globalState.customSkels=[];
+  if(globalState.customSkels.length>=12){alert('Max 12 custom skeletons! Delete one first.');return;}
+  let fee=1000+globalState.customSkels.length*500;
+  if(globalState.seeds<fee){alert('Need '+fee+' 🌱 seeds to build this custom skeleton!');return;}
+  let name=(document.getElementById('sl-name').value||'My Skeleton').slice(0,14);
+  let cfg={
+    hp:+document.getElementById('sl-hp').value,
+    speed:+document.getElementById('sl-speed').value/100,
+    dmg:+document.getElementById('sl-dmg').value,
+    regen:+document.getElementById('sl-regen').value,
+    armor:+document.getElementById('sl-armor').value,
+    count:+document.getElementById('sl-count').value,
+    ability:document.getElementById('sl-ability').value,
+  };
+  let cost=computeSkelCost({hp:cfg.hp,speed:+document.getElementById('sl-speed').value,dmg:cfg.dmg,regen:cfg.regen,armor:cfg.armor,count:cfg.count,ability:cfg.ability});
+  let id='cskel_'+Date.now();
+  globalState.seeds-=fee;
+  globalState.customSkels.push({id,name,emoji:slSelectedEmoji,hp:cfg.hp,speed:cfg.speed,dmg:cfg.dmg,regen:cfg.regen,armor:cfg.armor,count:cfg.count,ability:cfg.ability,cost});
+  saveStateNow();
+  updateLobbyUI();
+  alert(`✅ "${name}" built! Deploy it as the skeleton commander in Versus mode.`);
+}
+
+// Host-authoritative: host runs the simulation, guest sends actions and
+// renders host's broadcast state. Both share one lawn, sun pool, and waves.
+// ========================================================================
+let MP={
+  active:false,        // are we in a multiplayer game?
+  isHost:false,        // am I the host (authoritative sim)?
+  mode:'coop',         // 'coop' (both place porgs) or 'versus' (host=porgs, guest=skeletons)
+  peer:null,           // PeerJS instance
+  conn:null,           // active data connection
+  roomCode:'',
+  connected:false,
+  lastStateSent:0,
+};
+// Versus: skeleton-player energy economy
+let VS={
+  energy:100,          // current skeleton energy (guest side)
+  maxEnergy:300,
+  regen:8,             // energy per second
+  selectedSkel:0,      // which skeleton type the guest has selected to send
+};
+// Solo Skeleton mode: player is the skeletons vs AI-controlled Porgs
+let SOLO_SKEL={
+  active:false,
+  justEnded:false,
+  energy:100,
+  maxEnergy:100000000,
+  aiSun:150,           // AI's sun pool for placing Porgs
+  breakthrough:0,      // how many skeletons got past (you win at a threshold? or survive)
+  aiLevel:1,           // AI difficulty ramps over time
+};
+// Skeleton send costs (index matches SKELS array). Bosses cost a lot.
+const VS_COSTS=[20,35,15,120,250,500,800,1500,5000,2000];
+const VS_NAMES=['Skeleton','Heavy','Fast Bone','Skel King','Lich Lord','Void Reaper','Death Titan','Bone Colossus','World Serpent','Nightmare'];
+
+function mpGenCode(){
+  // 5-char readable code
+  const chars='ABCDEFGHJKLMNPQRSTUVWXYZ23456789';
+  let s='';for(let i=0;i<5;i++)s+=chars[Math.floor(Math.random()*chars.length)];
+  return s;
+}
+function mpShowPanel(id){
+  ['mp-idle','mp-hosting','mp-connected'].forEach(x=>{
+    let el=document.getElementById(x);if(el)el.style.display='none';
+  });
+  let t=document.getElementById(id);if(t)t.style.display='block';
+}
+function mpCheckLib(){
+  if(typeof Peer==='undefined'){
+    alert('⚠️ Multiplayer library failed to load. This needs an internet connection. Please check your connection and reload.');
+    return false;
+  }
+  return true;
+}
+
+// ---- HOST ----
+function mpHost(){
+  if(!mpCheckLib())return;
+  MP.isHost=true;
+  MP.roomCode=mpGenCode();
+  // Use a namespaced peer id so codes are short but collision-safe
+  let peerId='porgvs-'+MP.roomCode;
+  MP.peer=new Peer(peerId,{debug:1});
+  document.getElementById('mp-room-code').textContent=MP.roomCode;
+  document.getElementById('mp-status').textContent='⏳ Waiting for player to join...';
+  mpShowPanel('mp-hosting');
+
+  MP.peer.on('open',()=>{ /* ready, waiting for guest */ });
+  MP.peer.on('connection',(c)=>{
+    MP.conn=c;
+    mpSetupConn();
+    c.on('open',()=>{
+      MP.connected=true;
+      document.getElementById('mp-role').textContent='You are the HOST 🏠 — pick a mode below and start the game.';
+      let ms=document.getElementById('mp-mode-select');if(ms)ms.style.display='block';
+      let sb=document.getElementById('mp-start-btn');if(sb)sb.style.display='inline-block';
+      mpShowPanel('mp-connected');
+    });
+  });
+  MP.peer.on('error',(err)=>{
+    console.warn('Peer error:',err);
+    if(err.type==='unavailable-id'){
+      // code collision, regenerate
+      MP.peer.destroy();mpHost();
+    } else {
+      document.getElementById('mp-status').textContent='⚠️ Connection error: '+err.type;
+    }
+  });
+}
+
+// ---- JOIN ----
+function mpShowJoin(){
+  let box=document.getElementById('mp-join-box');
+  box.style.display=box.style.display==='none'?'block':'none';
+}
+function mpJoin(){
+  if(!mpCheckLib())return;
+  let code=(document.getElementById('mp-code-input').value||'').toUpperCase().trim();
+  if(code.length<4){alert('Please enter a valid room code.');return;}
+  MP.isHost=false;
+  MP.roomCode=code;
+  MP.peer=new Peer({debug:1});
+  MP.peer.on('open',()=>{
+    MP.conn=MP.peer.connect('porgvs-'+code,{reliable:true});
+    mpSetupConn();
+    MP.conn.on('open',()=>{
+      MP.connected=true;
+      document.getElementById('mp-role').textContent='You are PLAYER 2 🔗 — waiting for the host to choose a mode and start.';
+      let ms=document.getElementById('mp-mode-select');if(ms)ms.style.display='none';
+      let sb=document.getElementById('mp-start-btn');if(sb)sb.style.display='none';
+      mpShowPanel('mp-connected');
+    });
+  });
+  MP.peer.on('error',(err)=>{
+    console.warn('Peer error:',err);
+    alert('⚠️ Could not connect. Check the room code and that the host is waiting. ('+err.type+')');
+    mpShowPanel('mp-idle');
+  });
+}
+
+// ---- SHARED CONNECTION SETUP ----
+function mpSetupConn(){
+  MP.conn.on('data',(msg)=>mpHandleMessage(msg));
+  MP.conn.on('close',()=>{
+    if(MP.active){
+      alert('⚠️ Your co-op partner disconnected. Returning to lobby.');
+    }
+    mpReset();
+  });
+}
+
+function mpSend(msg){
+  if(MP.conn&&MP.connected){try{MP.conn.send(msg);}catch(e){}}
+}
+
+function mpCopyCode(){
+  let code=document.getElementById('mp-room-code').textContent;
+  try{navigator.clipboard.writeText(code);
+    document.getElementById('mp-status').textContent='📋 Code copied! Waiting for player...';
+  }catch(e){}
+}
+
+function mpCancel(){
+  mpSend({t:'bye'});
+  mpReset();
+}
+function mpReset(){
+  MP.active=false;MP.connected=false;
+  if(MP.conn){try{MP.conn.close();}catch(e){}MP.conn=null;}
+  if(MP.peer){try{MP.peer.destroy();}catch(e){}MP.peer=null;}
+  MP.isHost=false;MP.roomCode='';MP.mode='coop';
+  // Clean up any versus UI so solo/co-op show the shop normally
+  let vp=document.getElementById('vs-panel');if(vp)vp.remove();
+  document.querySelectorAll('#top-bar .shop-card').forEach(c=>c.style.display='');
+  let speedBtn=document.getElementById('speed-btn');if(speedBtn)speedBtn.style.display='';
+  mpShowPanel('mp-idle');
+  let jb=document.getElementById('mp-join-box');if(jb)jb.style.display='none';
+}
+
+// ---- MODE SELECTION (host only) ----
+function mpSetMode(mode){
+  if(!MP.isHost)return;
+  MP.mode=mode;
+  document.getElementById('mp-mode-coop').style.background=mode==='coop'?'#1D9E75':'#555';
+  document.getElementById('mp-mode-versus').style.background=mode==='versus'?'#c0392b':'#555';
+  document.getElementById('mp-mode-desc').textContent=mode==='coop'
+    ?'🤝 Co-op: both defend together, sharing sun.'
+    :'⚔️ Versus: YOU command the Porgs, your friend plays the Skeletons trying to break through!';
+  document.getElementById('mp-start-btn').textContent=mode==='coop'?'⚔️ Start Co-op Battle':'⚔️ Start Versus Battle';
+  document.getElementById('mp-start-btn').style.background=mode==='coop'?'#1D9E75':'#c0392b';
+}
+
+// ---- START GAME (host) ----
+function mpStartGame(){
+  MP.active=true;
+  if(MP.isHost){
+    mpSend({t:'start',mode:MP.mode});
+    document.getElementById('lobby').classList.remove('show');
+    document.getElementById('game-wrapper').classList.add('show');
+    canvas.width=COLS*CELL;canvas.height=ROWS*CELL;
+    initGame();
+    overlayEl.classList.add('show');
+    if(MP.mode==='versus'){
+      msgText.textContent='⚔️ Versus — You are the PORGS';
+      msgSub.textContent='Defend the lawn! Your friend is sending skeletons at you. Survive as long as you can.';
+      msgBtn.textContent='▶ Begin Defense';
+      msgBtn2.style.display='none';
+    } else {
+      msgText.textContent='🌐 Co-op Battle';
+      msgSub.textContent='You + your partner defend together! Both place Porgs, sharing sun.';
+      msgBtn.textContent='▶ Start Wave 1';
+      msgBtn2.style.display='none';
+    }
+  }
+}
+
+// ---- MESSAGE HANDLER ----
+function mpHandleMessage(msg){
+  if(!msg||!msg.t)return;
+  switch(msg.t){
+    case 'start':
+      // Guest: enter the game in client mode
+      MP.active=true;
+      MP.mode=msg.mode||'coop';
+      document.getElementById('lobby').classList.remove('show');
+      document.getElementById('game-wrapper').classList.add('show');
+      canvas.width=COLS*CELL;canvas.height=ROWS*CELL;
+      started=true;gameOver=false;
+      overlayEl.classList.remove('show');
+      if(MP.mode==='versus'){
+        // Guest is the SKELETON commander
+        VS.energy=100;
+        mpSetupVersusUI();
+      }
+      break;
+    case 'state':
+      // Guest: apply authoritative state from host
+      if(!MP.isHost) mpApplyState(msg.s);
+      break;
+    case 'action':
+      // Host: apply an action the guest requested (co-op porg placement)
+      if(MP.isHost&&MP.mode==='coop') mpApplyRemoteAction(msg.a);
+      break;
+    case 'sendskel':
+      // Host: guest (skeleton player) requested to spawn a skeleton
+      if(MP.isHost&&MP.mode==='versus') mpSpawnVersusSkel(msg.skelType,msg.row);
+      break;
+    case 'energy':
+      // Guest: host tells us our current energy (authoritative)
+      if(!MP.isHost&&MP.mode==='versus'){VS.energy=msg.e;mpUpdateVersusUI();}
+      break;
+    case 'vsover':
+      // Guest (skeleton player): the match ended
+      if(!MP.isHost&&MP.mode==='versus'){
+        gameOver=true;
+        let vp=document.getElementById('vs-panel');if(vp)vp.style.display='none';
+        if(!msg.porgWon){
+          msgText.textContent='🏆 VICTORY — Your skeletons broke through!';
+          msgSub.textContent='You defeated the Porg defender! GG.';
+        } else {
+          msgText.textContent='💀 The Porgs survived your assault...';
+          msgSub.textContent='Better luck next round, commander.';
+        }
+        msgBtn.textContent='🏠 Back to Lobby';
+        msgBtn2.style.display='none';
+        overlayEl.classList.add('show');
+      }
+      break;
+    case 'bye':
+      if(MP.active) alert('⚠️ Your multiplayer partner left the game.');
+      mpReset();
+      break;
+  }
+}
+
+// ---- VERSUS: host spawns a skeleton the guest requested (validated + energy-gated) ----
+function mpSpawnVersusSkel(skelType,row){
+  if(row<0||row>=ROWS)return;
+  if(MP.vsEnergy===undefined)MP.vsEnergy=100;
+  let hpMult=1+(wave-1)*0.06; // mild scaling in versus
+  // Custom skeleton? (skelType is a string id like 'cskel_123')
+  if(typeof skelType==='string'&&skelType.startsWith('cskel_')){
+    let cs=(globalState.customSkels||[]).find(s=>s.id===skelType);
+    if(!cs)return;
+    if(MP.vsEnergy<cs.cost)return;
+    MP.vsEnergy-=cs.cost;
+    let cnt=cs.count||1;
+    for(let n=0;n<cnt;n++){
+      let hp=Math.round(cs.hp*hpMult);
+      // stagger swarm spawns and rows slightly
+      let srow=row;
+      if(cnt>1)srow=Math.max(0,Math.min(ROWS-1,row+(n-Math.floor(cnt/2))));
+      skeletons.push({row:srow,x:COLS*CELL+20+n*30,y:srow*CELL+CELL/2,hp,maxHp:hp,speed:cs.speed,baseSpeed:cs.speed,reward:Math.round(cs.cost*2/cnt),emoji:cs.emoji,size:Math.min(70,30+Math.log10(Math.max(10,cs.hp))*6),type:0,isCustomSkel:true,customName:cs.name,attackDmg:cs.dmg,skelArmor:cs.armor||0,skelAbility:cs.ability||'none',attackTimer:0,hitFlash:0,slowed:0,frozen:0,inked:0,regen:cs.regen||0,voidPulse:0,titanPulse:0,colossusPulse:0,serpentPulse:0,nightmarePulse:0,slamTimer:0});
+    }
+    return;
+  }
+  // Standard skeleton (numeric index)
+  if(skelType<0||skelType>=SKELS.length)return;
+  let cost=VS_COSTS[skelType]||50;
+  if(MP.vsEnergy<cost)return; // not enough energy
+  MP.vsEnergy-=cost;
+  // bosses forced to center rows for fairness
+  let t=SKELS[skelType];
+  if((t.isTitan||t.isSerpent)&&(row<1||row>ROWS-2))row=1+Math.floor(Math.random()*(ROWS-2));
+  let hp=Math.round(t.hp*hpMult);
+  skeletons.push({row,x:COLS*CELL+20,y:row*CELL+CELL/2,hp,maxHp:hp,speed:t.speed,baseSpeed:t.speed,reward:t.reward,emoji:t.emoji,size:t.size,type:skelType,attackTimer:0,hitFlash:0,slowed:0,frozen:0,inked:0,isKing:!!t.isKing,isLich:!!t.isLich,isReaper:!!t.isReaper,isTitan:!!t.isTitan,isColossus:!!t.isColossus,isSerpent:!!t.isSerpent,isNightmare:!!t.isNightmare,regen:t.regen||0,voidPulse:0,titanPulse:0,colossusPulse:0,serpentPulse:0,nightmarePulse:0,slamTimer:0});
+}
+
+// ---- VERSUS: build the skeleton commander UI (guest side) ----
+function mpSetupVersusUI(){
+  // Hide the porg shop cards for the skeleton player (they live inside #top-bar)
+  document.querySelectorAll('#top-bar .shop-card').forEach(c=>c.style.display='none');
+  let speedBtn=document.getElementById('speed-btn');if(speedBtn)speedBtn.style.display='none';
+  let topbar=document.getElementById('top-bar');
+  // Remove any prior panel
+  let old=document.getElementById('vs-panel');if(old)old.remove();
+  let panel=document.createElement('div');
+  panel.id='vs-panel';
+  panel.style.cssText='background:#1a0d1a;border-top:2px solid #c0392b;padding:8px;display:flex;flex-direction:column;gap:6px;';
+  // Energy bar
+  let energyWrap=document.createElement('div');
+  energyWrap.innerHTML=`<div style="display:flex;justify-content:space-between;font-size:0.78rem;color:#ff8888;font-weight:600;">
+      <span>💀 SKELETON COMMANDER — click a lane to attack!</span>
+      <span id="vs-energy-label">⚡ 100 / 300</span>
+    </div>
+    <div style="height:10px;background:#000;border-radius:5px;overflow:hidden;margin-top:3px;">
+      <div id="vs-energy-bar" style="height:100%;width:33%;background:linear-gradient(90deg,#9b59b6,#c0392b);transition:width 0.2s;"></div>
+    </div>`;
+  panel.appendChild(energyWrap);
+  // Skeleton picker buttons
+  let picker=document.createElement('div');
+  picker.style.cssText='display:flex;gap:4px;flex-wrap:wrap;justify-content:center;';
+  SKELS.forEach((sk,i)=>{
+    let btn=document.createElement('button');
+    btn.className='vs-skel-btn';
+    btn.dataset.skel=i;
+    btn.style.cssText='display:flex;flex-direction:column;align-items:center;padding:5px 7px;border-radius:8px;border:2px solid transparent;background:#2a1a2a;color:#fff;cursor:pointer;font-size:0.68rem;min-width:54px;';
+    btn.innerHTML=`<span style="font-size:1.3rem;">${sk.emoji}</span><span style="font-size:0.62rem;color:#ccc;">${VS_NAMES[i]}</span><span style="color:#f5c400;font-weight:700;">⚡${VS_COSTS[i]}</span>`;
+    btn.onclick=()=>{VS.selectedSkel=i;mpUpdateVersusUI();};
+    picker.appendChild(btn);
+  });
+  // Custom skeletons from the lab
+  (globalState.customSkels||[]).forEach(cs=>{
+    let btn=document.createElement('button');
+    btn.className='vs-skel-btn';
+    btn.dataset.skel=cs.id;
+    btn.style.cssText='display:flex;flex-direction:column;align-items:center;padding:5px 7px;border-radius:8px;border:2px solid #9650ff;background:#2a1a3a;color:#fff;cursor:pointer;font-size:0.68rem;min-width:54px;';
+    btn.innerHTML=`<span style="font-size:1.3rem;">${cs.emoji}</span><span style="font-size:0.62rem;color:#c9a0ff;">${cs.name.slice(0,8)}</span><span style="color:#f5c400;font-weight:700;">⚡${cs.cost}</span>`;
+    btn.onclick=()=>{VS.selectedSkel=cs.id;mpUpdateVersusUI();};
+    picker.appendChild(btn);
+  });
+  panel.appendChild(picker);
+  // Insert the panel just under the top bar
+  if(topbar&&topbar.parentNode){
+    topbar.parentNode.insertBefore(panel,topbar.nextSibling);
+  } else {
+    document.getElementById('game-wrapper').appendChild(panel);
+  }
+  mpUpdateVersusUI();
+}
+
+// ---- VERSUS: get energy cost of any skeleton selection (number index or custom id) ----
+function vsSkelCost(sel){
+  if(typeof sel==='string'&&sel.startsWith('cskel_')){
+    let cs=(globalState.customSkels||[]).find(s=>s.id===sel);
+    return cs?cs.cost:99999;
+  }
+  return VS_COSTS[sel]||50;
+}
+
+// ---- VERSUS: update energy bar + selected skeleton highlight + affordability ----
+function mpUpdateVersusUI(){
+  let label=document.getElementById('vs-energy-label');
+  let bar=document.getElementById('vs-energy-bar');
+  if(label)label.textContent=`⚡ ${Math.round(VS.energy)} / ${VS.maxEnergy}`;
+  if(bar)bar.style.width=Math.min(100,(VS.energy/VS.maxEnergy)*100)+'%';
+  document.querySelectorAll('.vs-skel-btn').forEach(btn=>{
+    let raw=btn.dataset.skel;
+    let sel=raw.startsWith&&raw.startsWith('cskel_')?raw:+raw;
+    let isCustom=(typeof sel==='string');
+    let affordable=VS.energy>=vsSkelCost(sel);
+    let selected=(sel===VS.selectedSkel)||(String(sel)===String(VS.selectedSkel));
+    btn.style.borderColor=selected?'#f5c400':(isCustom?'#9650ff':'transparent');
+    btn.style.opacity=affordable?'1':'0.4';
+    btn.style.background=selected?(isCustom?'#4a2a5a':'#4a2a2a'):(isCustom?'#2a1a3a':'#2a1a2a');
+  });
+}
+
+// ---- VERSUS: brief on-screen message for the skeleton player ----
+let _vsMsgTimer=null;
+function flashVersusMsg(text){
+  let el=document.getElementById('vs-flash');
+  if(!el){
+    el=document.createElement('div');
+    el.id='vs-flash';
+    el.style.cssText='position:fixed;top:80px;left:50%;transform:translateX(-50%);background:#c0392b;color:#fff;padding:8px 16px;border-radius:8px;font-weight:600;font-size:0.85rem;z-index:9999;pointer-events:none;box-shadow:0 4px 12px rgba(0,0,0,0.4);';
+    document.body.appendChild(el);
+  }
+  el.textContent=text;
+  el.style.display='block';
+  if(_vsMsgTimer)clearTimeout(_vsMsgTimer);
+  _vsMsgTimer=setTimeout(()=>{if(el)el.style.display='none';},1400);
+}
+
+// ========================================================================
+// SOLO SKELETON MODE — you command the skeletons against an AI Porg defender
+// ========================================================================
+function startSoloSkeleton(){
+  SOLO_SKEL.active=true;
+  SOLO_SKEL.justEnded=false;
+  SOLO_SKEL.energy=10000;
+  SOLO_SKEL.aiSun=150;
+  SOLO_SKEL.breakthrough=0;
+  SOLO_SKEL.aiLevel=1;
+  VS.selectedSkel=0;
+  // reset board / game state
+  initGame();
+  started=true;gameOver=false;
+  lives=10; // the AI Porgs "defend" - you need to break through this many times
+  document.getElementById('lobby').classList.remove('show');
+  document.getElementById('game-wrapper').classList.add('show');
+  canvas.width=COLS*CELL;canvas.height=ROWS*CELL;
+  soloSkelSetupUI();
+  overlayEl.classList.add('show');
+  msgText.textContent='💀 Solo Skeleton Assault';
+  msgSub.textContent='Command the undead! Click a lane to send skeletons. The AI defends with Porgs — break through 10 times to WIN!';
+  msgBtn.textContent='💀 Begin Assault';
+  msgBtn2.style.display='none';
+}
+
+function soloSkelSetupUI(){
+  // Hide the porg shop cards (AI controls Porgs)
+  document.querySelectorAll('#top-bar .shop-card').forEach(c=>c.style.display='none');
+  let speedBtn=document.getElementById('speed-btn');if(speedBtn)speedBtn.style.display='';
+  let autoBtn=document.getElementById('autoupg-btn');if(autoBtn)autoBtn.style.display='none';
+  let topbar=document.getElementById('top-bar');
+  let old=document.getElementById('vs-panel');if(old)old.remove();
+  let panel=document.createElement('div');
+  panel.id='vs-panel';
+  panel.style.cssText='background:#1a0d1a;border-top:2px solid #c0392b;padding:8px;display:flex;flex-direction:column;gap:6px;';
+  let energyWrap=document.createElement('div');
+  energyWrap.innerHTML=`<div style="display:flex;justify-content:space-between;font-size:0.78rem;color:#ff8888;font-weight:600;">
+      <span>💀 SKELETON COMMANDER — click a lane to attack! AI breaches left: <span id="solo-breaches">0</span>/10</span>
+      <span id="vs-energy-label">⚡ 10K / 100M</span>
+    </div>
+    <div style="height:10px;background:#000;border-radius:5px;overflow:hidden;margin-top:3px;">
+      <div id="vs-energy-bar" style="height:100%;width:30%;background:linear-gradient(90deg,#9b59b6,#c0392b);transition:width 0.2s;"></div>
+    </div>`;
+  panel.appendChild(energyWrap);
+  let picker=document.createElement('div');
+  picker.style.cssText='display:flex;gap:4px;flex-wrap:wrap;justify-content:center;';
+  SKELS.forEach((sk,i)=>{
+    let btn=document.createElement('button');
+    btn.className='vs-skel-btn';btn.dataset.skel=i;
+    btn.style.cssText='display:flex;flex-direction:column;align-items:center;padding:5px 7px;border-radius:8px;border:2px solid transparent;background:#2a1a2a;color:#fff;cursor:pointer;font-size:0.68rem;min-width:54px;';
+    btn.innerHTML=`<span style="font-size:1.3rem;">${sk.emoji}</span><span style="font-size:0.62rem;color:#ccc;">${VS_NAMES[i]}</span><span style="color:#f5c400;font-weight:700;">⚡${VS_COSTS[i]}</span>`;
+    btn.onclick=()=>{VS.selectedSkel=i;soloSkelUpdateUI();};
+    picker.appendChild(btn);
+  });
+  // Custom skeletons are NOT available in solo mode (only standard skeletons)
+  panel.appendChild(picker);
+  if(topbar&&topbar.parentNode){topbar.parentNode.insertBefore(panel,topbar.nextSibling);}
+  else{document.getElementById('game-wrapper').appendChild(panel);}
+  soloSkelUpdateUI();
+}
+
+function soloSkelUpdateUI(){
+  let label=document.getElementById('vs-energy-label');
+  let bar=document.getElementById('vs-energy-bar');
+  if(label)label.textContent=`⚡ ${fmtBig(SOLO_SKEL.energy)} / ${fmtBig(SOLO_SKEL.maxEnergy)}`;
+  if(bar)bar.style.width=Math.min(100,(SOLO_SKEL.energy/SOLO_SKEL.maxEnergy)*100)+'%';
+  let br=document.getElementById('solo-breaches');if(br)br.textContent=SOLO_SKEL.breakthrough;
+  document.querySelectorAll('.vs-skel-btn').forEach(btn=>{
+    let raw=btn.dataset.skel;
+    let sel=raw.startsWith&&raw.startsWith('cskel_')?raw:+raw;
+    let isCustom=(typeof sel==='string');
+    let affordable=SOLO_SKEL.energy>=vsSkelCost(sel);
+    let selected=(String(sel)===String(VS.selectedSkel));
+    btn.style.borderColor=selected?'#f5c400':(isCustom?'#9650ff':'transparent');
+    btn.style.opacity=affordable?'1':'0.4';
+    btn.style.background=selected?(isCustom?'#4a2a5a':'#4a2a2a'):(isCustom?'#2a1a3a':'#2a1a2a');
+  });
+}
+
+// Spawn a skeleton in solo mode (player-controlled, energy-gated)
+function soloSkelSpawn(skelType,row){
+  if(row<0||row>=ROWS)return;
+  let hpMult=1+(SOLO_SKEL.aiLevel-1)*0.08;
+  if(typeof skelType==='string'&&skelType.startsWith('cskel_')){
+    let cs=(globalState.customSkels||[]).find(s=>s.id===skelType);
+    if(!cs||SOLO_SKEL.energy<cs.cost)return;
+    SOLO_SKEL.energy-=cs.cost;
+    let cnt=cs.count||1;
+    for(let n=0;n<cnt;n++){
+      let hp=Math.round(cs.hp*hpMult);let srow=row;
+      if(cnt>1)srow=Math.max(0,Math.min(ROWS-1,row+(n-Math.floor(cnt/2))));
+      skeletons.push({row:srow,x:COLS*CELL+20+n*30,y:srow*CELL+CELL/2,hp,maxHp:hp,speed:cs.speed,baseSpeed:cs.speed,reward:0,emoji:cs.emoji,size:Math.min(70,30+Math.log10(Math.max(10,cs.hp))*6),type:0,isCustomSkel:true,customName:cs.name,attackDmg:cs.dmg,skelArmor:cs.armor||0,skelAbility:cs.ability||'none',attackTimer:0,hitFlash:0,slowed:0,frozen:0,inked:0,regen:cs.regen||0,voidPulse:0,titanPulse:0,colossusPulse:0,serpentPulse:0,nightmarePulse:0,slamTimer:0});
+    }
+    soloSkelUpdateUI();return;
+  }
+  if(skelType<0||skelType>=SKELS.length)return;
+  let cost=VS_COSTS[skelType]||50;
+  if(SOLO_SKEL.energy<cost)return;
+  SOLO_SKEL.energy-=cost;
+  let t=SKELS[skelType];
+  if((t.isTitan||t.isSerpent)&&(row<1||row>ROWS-2))row=1+Math.floor(Math.random()*(ROWS-2));
+  let hp=Math.round(t.hp*hpMult);
+  skeletons.push({row,x:COLS*CELL+20,y:row*CELL+CELL/2,hp,maxHp:hp,speed:t.speed,baseSpeed:t.speed,reward:0,emoji:t.emoji,size:t.size,type:skelType,attackTimer:0,hitFlash:0,slowed:0,frozen:0,inked:0,isKing:!!t.isKing,isLich:!!t.isLich,isReaper:!!t.isReaper,isTitan:!!t.isTitan,isColossus:!!t.isColossus,isSerpent:!!t.isSerpent,isNightmare:!!t.isNightmare,regen:t.regen||0,voidPulse:0,titanPulse:0,colossusPulse:0,serpentPulse:0,nightmarePulse:0,slamTimer:0});
+  soloSkelUpdateUI();
+}
+
+// AI Porg defender: picks good Porgs and places/upgrades them to defend
+const AI_PORG_CHOICES=['shooter','wall','bomber','grapes','octopus','starporg','astroflora','bloodvine'];
+function soloSkelAITick(){
+  if(!SOLO_SKEL.active)return;
+  // AI earns sun over time, scaling with difficulty
+  SOLO_SKEL.aiSun=Math.min(SOLO_SKEL.aiSun+2+SOLO_SKEL.aiLevel*0.5,9999999);
+
+  // Decide an action a few times a second
+  if(frameCount%45!==0)return;
+
+  // Find threatened rows (where skeletons are advancing) and reinforce them
+  let rowThreat=Array(ROWS).fill(0);
+  for(let s of skeletons){if(s.hp>0)rowThreat[s.row]+=s.hp;}
+
+  // Try to upgrade an existing Porg in the most threatened row first
+  let order=[...Array(ROWS).keys()].sort((a,b)=>rowThreat[b]-rowThreat[a]);
+  for(let r of order){
+    if(rowThreat[r]<=0)continue;
+    // upgrade a porg in this row if affordable
+    for(let c=1;c<COLS;c++){
+      let p=cells[r][c];
+      if(p&&p.hp>0&&(p.level||0)<MAX_LEVEL){
+        let uc=upgradeCost(p.type,p.level||0);
+        if(SOLO_SKEL.aiSun>=uc&&Math.random()<0.5){
+          SOLO_SKEL.aiSun-=uc;p.level=(p.level||0)+1;
+          let st=getStats(p.type,p.level);let mx=Math.round(st.hp*1.0);p.maxHp=mx;p.hp=Math.min(p.hp+Math.round(mx*0.5),mx);p.timer=0;
+          for(let i=0;i<3;i++)omegaRings.push({x:c*CELL+CELL/2,y:r*CELL+CELL/2,r:i*6,life:14,color:'#5DCAA5'});
+          return;
+        }
+      }
+    }
+    // otherwise place a new porg in an empty cell in this row (toward the front)
+    for(let c=Math.min(COLS-1,5);c>=1;c--){
+      if(!cells[r][c]){
+        // pick an affordable porg, prefer stronger ones as difficulty rises
+        let pool=AI_PORG_CHOICES.filter(t=>{let d=PORGS[t];return d&&d.cost<=SOLO_SKEL.aiSun;});
+        if(pool.length===0)break;
+        // bias toward later (stronger) choices at higher AI level
+        let pick=pool[Math.min(pool.length-1,Math.floor(Math.random()*pool.length*(0.5+SOLO_SKEL.aiLevel*0.05)))%pool.length];
+        let def=PORGS[pick];
+        SOLO_SKEL.aiSun-=def.cost;
+        let baseHp=getStats(pick,0).hp;
+        cells[r][c]={type:pick,level:0,hp:baseHp,maxHp:baseHp,timer:0,hitFlash:0};
+        return;
+      }
+    }
+  }
+  // If no threats, AI builds up defense randomly
+  if(Math.random()<0.3){
+    let r=Math.floor(Math.random()*ROWS),c=1+Math.floor(Math.random()*4);
+    if(!cells[r][c]){
+      let pool=AI_PORG_CHOICES.filter(t=>{let d=PORGS[t];return d&&d.cost<=SOLO_SKEL.aiSun;});
+      if(pool.length){let pick=pool[Math.floor(Math.random()*pool.length)];let def=PORGS[pick];SOLO_SKEL.aiSun-=def.cost;let bh=getStats(pick,0).hp;cells[r][c]={type:pick,level:0,hp:bh,maxHp:bh,timer:0,hitFlash:0};}
+    }
+  }
+}
+
+function endSoloSkeleton(win){
+  gameOver=true;SOLO_SKEL.active=false;SOLO_SKEL.justEnded=true;
+  let vp=document.getElementById('vs-panel');if(vp)vp.style.display='none';
+  if(win){
+    msgText.textContent='🏆 VICTORY — You overwhelmed the Porgs!';
+    msgSub.textContent=`Your undead horde breached the defenses 10 times. The lawn has fallen! 💀`;
+  } else {
+    msgText.textContent='💀 The Porgs held the line...';
+    msgSub.textContent=`You ran out of breaches. The AI defender survived your assault. Try a heavier swarm next time!`;
+  }
+  msgBtn.textContent='🏠 Back to Lobby';
+  msgBtn2.style.display='none';
+  overlayEl.classList.add('show');
+}
+
+// ---- HOST: broadcast game state to guest (called from loop) ----
+function mpBroadcastState(){
+  if(!MP.active||!MP.isHost||!MP.connected)return;
+  // Throttle to ~12 updates/sec to keep bandwidth sane
+  let now=Date.now();
+  if(now-MP.lastStateSent<80)return;
+  MP.lastStateSent=now;
+  let s={
+    sun,lives,wave,waveActive,gameOver,
+    // compact cells: only occupied
+    c:[],
+    k:skeletons.map(sk=>[Math.round(sk.x),Math.round(sk.y),sk.row,Math.round(sk.hp),Math.round(sk.maxHp),sk.type]),
+    p:projectiles.map(pr=>[Math.round(pr.x),Math.round(pr.y),pr.row,pr.isGrape?1:pr.isInk?2:pr.isExplode?3:0]),
+  };
+  for(let r=0;r<ROWS;r++)for(let cc=0;cc<COLS;cc++){
+    let p=cells[r][cc];
+    if(p)s.c.push([r,cc,p.type,p.level||0,Math.round(p.hp),Math.round(p.maxHp||p.hp)]);
+  }
+  mpSend({t:'state',s});
+}
+
+// ---- GUEST: apply received state for rendering ----
+function mpApplyState(s){
+  if(!s)return;
+  sun=s.sun;lives=s.lives;wave=s.wave;waveActive=s.waveActive;
+  if(s.gameOver&&!gameOver){gameOver=true;}
+  // rebuild cells
+  cells=Array.from({length:ROWS},()=>Array(COLS).fill(null));
+  if(s.c)for(let e of s.c){
+    let [r,cc,type,level,hp,maxHp]=e;
+    cells[r][cc]={type,level,hp,maxHp,timer:0,hitFlash:0};
+  }
+  // rebuild skeletons (render-only, derive visual props from type)
+  skeletons=(s.k||[]).map(e=>{
+    let [x,y,row,hp,maxHp,type]=e;
+    let t=SKELS[type]||SKELS[0];
+    return {x,y,row,hp,maxHp,type,speed:t.speed,baseSpeed:t.speed,emoji:t.emoji,size:t.size,reward:t.reward,
+      isKing:!!t.isKing,isLich:!!t.isLich,isReaper:!!t.isReaper,isTitan:!!t.isTitan,isColossus:!!t.isColossus,isSerpent:!!t.isSerpent,isNightmare:!!t.isNightmare,regen:t.regen||0,
+      hitFlash:0,frozen:0,inked:0,slowed:0,attackTimer:0,voidPulse:0,titanPulse:0,colossusPulse:0,serpentPulse:0,nightmarePulse:0,slamTimer:0};
+  });
+  // projectiles (render-only)
+  projectiles=(s.p||[]).map(e=>{
+    let [x,y,row,kind]=e;
+    return {x,y,row,speed:0,dmg:0,isGrape:kind===1,isInk:kind===2,isExplode:kind===3};
+  });
+  _uiDirty=true;
+}
+
+// ---- GUEST: send an action to host instead of doing it locally ----
+function mpRequestAction(action){
+  mpSend({t:'action',a:action});
+}
+// ---- HOST: execute an action requested by guest ----
+function mpApplyRemoteAction(a){
+  if(!a)return;
+  if(a.type==='place'){
+    let {col,row,unit}=a;
+    if(col>0&&col<COLS&&row>=0&&row<ROWS&&!cells[row][col]){
+      let unlocked=globalState.unlockedUnits.includes(unit)||['quickporg','shooter','wall','bomber','sunporg','suncollector','porgspawner'].includes(unit)||unit.startsWith('custom_');
+      let def=porgDef(unit);
+      if(unlocked&&def&&sun>=def.cost){
+        let baseHp=Math.round(getStats(unit,0).hp*hpMult());
+        cells[row][col]={type:unit,level:0,hp:baseHp,maxHp:baseHp,timer:0,hitFlash:0};
+        if(unit==='diveporg')createDiveUnit(col,row);
+        sun-=def.cost;updateUI();
+      }
+    }
+  } else if(a.type==='upgrade'){
+    let {col,row}=a;let p=cells[row]&&cells[row][col];
+    if(p&&(p.level||0)<MAX_LEVEL){
+      let cost=upgradeCost(p.type,p.level||0);
+      if(sun>=cost){sun-=cost;p.level=(p.level||0)+1;let st=getStats(p.type,p.level);let mx=Math.round(st.hp*hpMult());p.maxHp=mx;p.hp=Math.min(p.hp+Math.round(mx*0.5),mx);p.timer=0;if(p.type==='diveporg'){let d=getDiveUnit(col,row);if(d){d.level=p.level;d.timer=0;}}updateUI();}
+    }
+  } else if(a.type==='remove'){
+    let {col,row}=a;if(cells[row]&&cells[row][col]&&cells[row][col].hp>0)removeUnit(col,row);
+  } else if(a.type==='collectsun'){
+    // guest clicked a falling sun — just credit shared pool
+    sun=Math.min(sun+(a.val||25),9999999);updateUI();
+  }
+}
+
+function goToLobby(){
+  if(MP.active){mpCancel();}
+  if(SOLO_SKEL.active||SOLO_SKEL.justEnded){
+    SOLO_SKEL.active=false;SOLO_SKEL.justEnded=false;
+    let vp=document.getElementById('vs-panel');if(vp)vp.remove();
+    document.querySelectorAll('#top-bar .shop-card').forEach(c=>c.style.display='');
+    let autoBtn=document.getElementById('autoupg-btn');if(autoBtn)autoBtn.style.display='';
+  }
+  overlayEl.classList.remove('show');
+  waveActiveResume=false;
+  if(started && !gameOver && !SOLO_SKEL.active) saveRunNow(); // preserve current run while in lobby
+  document.getElementById('lobby').classList.add('show');
+  document.getElementById('game-wrapper').classList.remove('show');
+  updateLobbyUI();
+}
+
+function startGame(){
+  document.getElementById('lobby').classList.remove('show');
+  document.getElementById('game-wrapper').classList.add('show');
+  canvas.width=COLS*CELL; canvas.height=ROWS*CELL;
+
+  // If there's an active run in progress (not game over), just resume it
+  if(!gameOver && (wave>1 || (wave===1 && cells && cells.some(row=>row.some(c=>c!==null))))){
+    updateUI();
+    updateShopCards();
+    // Show a resume overlay so player can prepare before the next wave
+    overlayEl.classList.add('show');
+    msgText.textContent=`▶ Resume — Wave ${wave}`;
+    msgSub.textContent=`Lives: ${lives} | ☀️ ${sun} | 🌱 Seeds: ${globalState.seeds}`;
+    msgBtn.textContent=`▶ Continue Wave ${wave}`;
+    msgBtn2.style.display='none'; // already in game, no lobby button needed here
+    return;
+  }
+
+  // Fresh start
+  initGame();
+  overlayEl.classList.add('show');
+  msgText.textContent='🐦 Porgs vs Skeletons';
+  msgSub.textContent='Survive 10,000 waves. Earn seeds. Return to the Lobby between waves.';
+  msgBtn.textContent='▶ Start Wave 1';
+  msgBtn2.style.display=globalState.highestWave>=10?'inline-block':'none';
+}
+
+updateLobbyUI();
+
+// ========== GAME ENGINE ==========
+const canvas=document.getElementById('canvas');
+const ctx=canvas.getContext('2d');
+const COLS=11,ROWS=7,CELL=64;
+// Set canvas dimensions immediately regardless of display state
+canvas.width=COLS*CELL; canvas.height=ROWS*CELL;
+canvas.style.maxWidth='100%';
+
+let sun=150,lives=5,wave=1,gameOver=false,started=false,selectedType='quickporg',removeMode=false;
+let cells=Array.from({length:7},()=>Array(11).fill(null));
+let projectiles=[],skeletons=[],suns=[],explosions=[],bloodParticles=[],starBeams=[],omegaRings=[],diveUnits=[],voidCracks=[],inkSplats=[],grapeBounces=[],titanShockwaves=[],removeParticles=[],megaRunners=[];
+let waveTimer=0,spawnIndex=0,spawnList=[],waveActive=false,frameCount=0;
+let selectedCell=null;
+let sessionDamage=0, sessionKills=0, seedAccum=0;
+const MAX_WAVES=10000,FPS=60,COOP_FRAMES=60*FPS;
+
+const overlayEl=document.getElementById('msg-overlay');
+const msgText=document.getElementById('msg-text');
+const msgSub=document.getElementById('msg-sub');
+const msgBtn=document.getElementById('msg-btn');
+const msgBtn2=document.getElementById('msg-btn2');
+const upgradePanel=document.getElementById('upgrade-panel');
+const upgradeInfo=document.getElementById('upgrade-info');
+const upgradeBtn=document.getElementById('upgrade-btn');
+
+function initGame(){
+  clearRun();
+  waveActiveResume=false;
+  let pw=globalState.powerUps;
+  sun=150+(pw.start_sun||0)*100;
+  lives=5+(pw.extra_lives||0)*2;
+  wave=1; gameOver=false; started=false; selectedType='quickporg'; removeMode=false;
+  cells=Array.from({length:ROWS},()=>Array(COLS).fill(null));
+  projectiles=[];skeletons=[];suns=[];explosions=[];bloodParticles=[];starBeams=[];
+  omegaRings=[];diveUnits=[];voidCracks=[];inkSplats=[];grapeBounces=[];
+  titanShockwaves=[];removeParticles=[];megaRunners=[];
+  waveTimer=0;spawnIndex=0;spawnList=[];waveActive=false;frameCount=0;
+  sessionDamage=0;sessionKills=0;seedAccum=0;
+  selectedCell=null;_uiDirty=false;
+  // Reset shop card selection
+  document.querySelectorAll('.shop-card').forEach(c=>c.classList.remove('selected'));
+  let qcard=document.querySelector('.shop-card[data-type="quickporg"]');
+  if(qcard) qcard.classList.add('selected');
+  gameSpeed=globalState.prefSpeed||1;
+  applySpeedButton();applyAutoUpgradeButton();
+  updateUI();
+  updateShopCards();
+}
+
+function updateShopCards(){
+  document.querySelectorAll('.shop-card[data-type]').forEach(card=>{
+    let t=card.dataset.type;
+    if(t==='__remove__') return;
+    if(t&&t.startsWith('custom_')) return; // handled below
+    let unlocked=globalState.unlockedUnits.includes(t)||['quickporg','shooter','wall','bomber','sunporg','suncollector','porgspawner'].includes(t);
+    card.classList.toggle('locked-unit',!unlocked);
+  });
+  // Inject custom porg shop cards
+  let container=document.getElementById('custom-porg-cards');
+  if(container){
+    container.innerHTML='';
+    (globalState.customPorgs||[]).forEach(cp=>{
+      let card=document.createElement('div');
+      card.className='shop-card';
+      card.style.cssText='border:0.5px solid #7F77DD;background:#1e1a3e;';
+      card.dataset.type=cp.id;
+      let shortName=cp.name.length>8?cp.name.slice(0,7)+'…':cp.name;
+      let costLabel=cp.cost>=1000?(cp.cost/1000).toFixed(cp.cost>=10000?0:1)+'K':cp.cost;
+      card.innerHTML=`<span class="emoji">${cp.emoji}</span><span>${shortName}</span><span class="cost">💰${costLabel}</span>`;
+      card.addEventListener('click',()=>{
+        removeMode=false;selectedType=cp.id;
+        document.querySelectorAll('.shop-card').forEach(c=>c.classList.remove('selected'));
+        card.classList.add('selected');
+      });
+      container.appendChild(card);
+    });
+  }
+}
+
+function updateUI(){
+  document.getElementById('sun-val').textContent=sun;
+  document.getElementById('wave-num').textContent=wave+'/10000';
+  document.getElementById('lives-val').textContent=lives;
+  document.getElementById('seeds-val').textContent=globalState.seeds;
+}
+
+let _uiDirty=false;
+function dealDamage(amount){
+  sessionDamage+=amount;
+  globalState.totalDamage+=amount;
+  let mult=1+(globalState.powerUps.seed_boost||0)*0.5;
+  seedAccum+=amount*mult;
+  if(seedAccum>=100){
+    let chunks=Math.floor(seedAccum/100);
+    seedAccum-=chunks*100;
+    globalState.seeds+=chunks;
+    saveState(); // debounced
+    _uiDirty=true;
+  }
+}
+
+// ========== STATS ==========
+const UPGRADE_COST={quickporg:75,shooter:150,wall:100,bomber:250,sunporg:125,suncollector:175,porgspawner:300,astroflora:400,bloodvine:300,starporg:800,omegaporg:1200,coop:1500,diveporg:200,grapes:150,octopus:350};
+const UPGRADE_LABELS={quickporg:'Quick II',shooter:'Shooter II',wall:'Fortress',bomber:'Mega Bomber',sunporg:'Solar Porg',suncollector:'Solar Harvester',porgspawner:'Mega Spawner',astroflora:'Astroflora II',bloodvine:'Crimson Vine',starporg:'Nova Porg',omegaporg:'Omega II',coop:'Omega Coop II',diveporg:'Ace Dive',grapes:'Mega Grapes',octopus:'Kraken'};
+const UPGRADE_LABELS_T3={quickporg:'Quick III ⚡',shooter:'Sniper Porg',wall:'Citadel',bomber:'Nuke Bomber',sunporg:'Solar Deity',suncollector:'Galactic Harvester',porgspawner:'Titan Spawner',astroflora:'Glacial Bloom',bloodvine:'Blood Sovereign',starporg:'Supernova Porg',omegaporg:'Omega Prime',coop:'Omega Palace',diveporg:'Sky Emperor',grapes:'Grape Storm',octopus:'Leviathan'};
+const UPGRADE_LABELS_T4={quickporg:'Quick IV ⚡⚡',shooter:'Deadeye Porg',wall:'Bastion',bomber:'Apocalypse',sunporg:'Solar Titan',suncollector:'Cosmic Reaper',porgspawner:'Colossus Spawner',astroflora:'Absolute Zero',bloodvine:'Crimson Overlord',starporg:'Hypernova',omegaporg:'Omega Eternal',coop:'Omega Citadel',diveporg:'Storm Lord',grapes:'Grape Apocalypse',octoverse:'Kraken King',octopus:'Kraken King'};
+const UPGRADE_LABELS_T5={quickporg:'Quick V 🌟',shooter:'Godshot Porg',wall:'Aegis Eternal',bomber:'Singularity',sunporg:'Solar God',suncollector:'Universe Harvester',porgspawner:'World Ender',astroflora:'Heat Death',bloodvine:'Blood God',starporg:'Big Bang Porg',omegaporg:'Omega Infinity',coop:'Omega Dominion',diveporg:'Sky God',grapes:'Grape Cataclysm',octopus:'Eldritch Leviathan'};
+function upgradeLabel(type,nextLvl){
+  if(nextLvl>=5) return UPGRADE_LABELS_T5[type]||'Tier V 🌟';
+  if(nextLvl>=4) return UPGRADE_LABELS_T4[type]||'Tier IV';
+  if(nextLvl>=3) return UPGRADE_LABELS_T3[type]||'Tier III';
+  return UPGRADE_LABELS[type]||'Upgrade';
+}
+function upgradeCost(type,curLvl){
+  let base;
+  if(type&&type.startsWith&&type.startsWith('custom_')){
+    let cp=getCustomPorg(type);
+    base=cp?Math.max(50,Math.round(cp.cost*0.6)):100; // 60% of deploy cost per level
+  } else {
+    base=UPGRADE_COST[type]||100;
+  }
+  let mult=curLvl>=4?6.0:curLvl>=3?4.0:curLvl>=2?2.2:1;
+  let disc=1-(globalState.powerUps.cheaper_upg||0)*0.08;
+  return Math.max(10,Math.round(base*mult*disc));
+}
+const MAX_LEVEL=5;
+
+function dmgMult(){return 1+(globalState.powerUps.global_dmg||0)*0.1;}
+function rateBoost(){return 1+(globalState.powerUps.global_speed||0)*0.1;}
+function hpMult(){return 1+(globalState.powerUps.global_hp||0)*0.15;}
+function rollCrit(){let c=(globalState.powerUps.crit_chance||0)*0.05;return Math.random()<c?3:1;}
+
+function getCustomPorg(type){return (globalState.customPorgs||[]).find(cp=>cp.id===type);}
+
+// Apply a plant's armor (custom porgs only) to reduce incoming damage
+function plantDamage(p,raw){
+  if(p && p.type && p.type.startsWith('custom_')){
+    let cp=getCustomPorg(p.type);
+    if(cp && cp.armor) return raw*(1-Math.min(75,cp.armor)/100);
+  }
+  return raw;
+}
+
+function getStats(type,level){
+  // Custom porgs: stats come directly from the saved config (no level scaling)
+  let cp=getCustomPorg(type);
+  if(cp){
+    let s={hp:cp.hp,rate:cp.rate,dmg:cp.dmg,isCustom:true,splash:cp.splash,customRange:cp.range,ability:cp.ability||(cp.splash?'splash':'none'),proj:cp.proj||'⭐',pspeed:cp.pspeed||4,armor:cp.armor||0,regen:cp.regen||0};
+    if(level>0){let m=level===1?1.6:level===2?2.5:level===3?3.8:level===4?5.5:8.0;s.hp=Math.round(cp.hp*m);s.dmg=Math.round(cp.dmg*m);s.rate=Math.max(2,Math.round(cp.rate/m));}
+    return s;
+  }
+  const base={
+    quickporg:{hp:40,rate:55,dmg:10},shooter:{hp:100,rate:120,dmg:25},wall:{hp:300,rate:0,dmg:0},
+    bomber:{hp:80,rate:90,dmg:60},sunporg:{hp:120,rate:180,dmg:0,sunGain:74},
+    suncollector:{hp:160,rate:0,dmg:0,collectRadius:1.8,collectSpeed:0.08},
+    // porgspawner: rate = frames between spawning a mega runner. runnerHp = runner's HP. runnerDmg = collision damage drained per hit.
+    porgspawner:{hp:300,rate:480,dmg:0,runnerHp:10000,runnerDmg:500,runnerSpeed:0.9},
+    grapes:{hp:130,rate:100,dmg:30,bounces:10},
+    octopus:{hp:220,rate:70,dmg:20,inkRows:2,slowFactor:0.35,inkDuration:120},
+    astroflora:{hp:180,rate:80,dmg:40,range:3.5,freeze:90},
+    bloodvine:{hp:350,rate:35,dmg:35,slowFactor:0.22,range:2.2},
+    diveporg:{hp:80,rate:300,dmg:60,aoeRadius:30},
+    starporg:{hp:500,rate:45,dmg:120,aoeRange:2.8},
+    omegaporg:{hp:1200,rate:30,dmg:200,range:4.0},
+    coop:{hp:400,rate:COOP_FRAMES,dmg:0},
+  }[type];
+  if(!base) return {};
+  if(level===0) return {...base};
+  const m=level===1?1.6:level===2?2.5:level===3?3.8:level===4?5.5:8.0;
+  let s={...base,hp:Math.round(base.hp*m)};
+  if(base.dmg) s.dmg=Math.round(base.dmg*m);
+  if(base.rate&&base.rate>0&&type!=='coop') s.rate=Math.max(8,Math.round(base.rate/m));
+  if(base.sunGain) s.sunGain=Math.round(base.sunGain*m);
+  if(base.range) s.range=base.range+level*0.6;
+  if(base.freeze) s.freeze=Math.round(base.freeze*Math.max(0.2,(0.7-level*0.1)));
+  if(base.aoeRadius) s.aoeRadius=Math.round(base.aoeRadius*(1+level*0.4));
+  if(type==='grapes') s.bounces=level===1?10:level===2?15:level===3?22:level===4?30:40;
+  if(base.inkRows) s.inkRows=base.inkRows+level;
+  if(base.collectRadius) s.collectRadius=base.collectRadius+level*0.8;
+  if(base.collectSpeed) s.collectSpeed=base.collectSpeed*(1+level*0.5);
+  if(base.runnerHp) s.runnerHp=base.runnerHp*(1+level*1.5);
+  if(base.runnerDmg) s.runnerDmg=base.runnerDmg*(1+level);
+  if(base.runnerSpeed) s.runnerSpeed=base.runnerSpeed*(1+level*0.3);
+  return s;
+}
+
+const PORGS={
+  quickporg:{cost:25,emoji:'🐤'},shooter:{cost:100,emoji:'🐦'},wall:{cost:50,emoji:'🥚'},
+  bomber:{cost:175,emoji:'🐣'},sunporg:{cost:75,emoji:'🌟'},suncollector:{cost:150,emoji:'🌻'},porgspawner:{cost:100000,emoji:'🥚'},grapes:{cost:125,emoji:'🍇'},
+  octopus:{cost:300,emoji:'🐙'},astroflora:{cost:350,emoji:'🌸'},bloodvine:{cost:1000,emoji:'🌿'},
+  diveporg:{cost:250,emoji:'🦅'},starporg:{cost:700,emoji:'✨'},omegaporg:{cost:1500,emoji:'🌀'},coop:{cost:2000,emoji:'🏠'},
+};
+// Resolve a porg definition (built-in or custom)
+function porgDef(type){
+  if(PORGS[type]) return PORGS[type];
+  let cp=getCustomPorg(type);
+  if(cp) return {cost:cp.cost,emoji:cp.emoji};
+  return {cost:0,emoji:'❓'};
+}
+
+function getRefund(p){let b=porgDef(p.type).cost;let lvl=p.level||0;let u=0;for(let L=0;L<lvl;L++){u+=UPGRADE_COST[p.type]?upgradeCost(p.type,L):0;}return Math.floor((b+u)*0.5);}
+
+// ========== ENEMIES ==========
+const SKELS=[
+  {hp:80,   speed:0.5091, reward:10,   emoji:'💀',size:30},
+  {hp:150,  speed:0.2829, reward:20,   emoji:'☠️',size:34},
+  {hp:60,   speed:0.7919, reward:15,   emoji:'🦴',size:28},
+  {hp:600,  speed:0.1697, reward:100,  emoji:'👑',size:50,isKing:true},
+  {hp:2500, speed:0.4526, reward:250,  emoji:'💀',size:44,isLich:true},
+  {hp:110000,speed:0.8486, reward:500,  emoji:'💀',size:56,isReaper:true},
+  {hp:50000,speed:0.6223, reward:2000, emoji:'💀',size:66,isTitan:true},
+  {hp:1000000,speed:0.1697,reward:5000,emoji:'💀',size:72,isColossus:true},
+  {hp:1000000000,speed:0.1131,reward:50000,emoji:'🐉',size:88,isSerpent:true},
+  {hp:10000000,speed:0.2829,reward:15000,emoji:'👹',size:78,isNightmare:true,regen:25000},
+];
+
+function buildWaveList(w){
+  let list=[],count=Math.min(6+Math.floor(w*2.5),120),interval=Math.max(10,80-Math.floor(w*0.5)),hpMult=1+(w-1)*0.12;
+  let kingChance=w>=4?Math.min(0.03*(w-3),0.35):0,lichChance=w>=8?Math.min(0.015*(w-7),0.25):0;
+  let reaperChance=w>=10?Math.min(0.022*(w-9),0.40):0,titanChance=w>=20?Math.min(0.010*(w-19),0.20):0;
+  let colossusChance=w>=10?Math.min(0.007*(w-9),0.10):0;
+  // World Serpent is a guaranteed BOSS every 20th wave (20, 40, 60...). No random spawns otherwise.
+  let isSerpentWave=(w%20===0);
+  let serpentCount=isSerpentWave?Math.min(1+Math.floor(w/100),5):0; // 1 serpent, +1 every 100 waves up to 5
+  // Nightmare is a guaranteed regenerating BOSS every 15th wave (15, 30, 45...).
+  let isNightmareWave=(w>=15&&w%15===0);
+  let nightmareCount=isNightmareWave?Math.min(1+Math.floor(w/150),4):0;
+  for(let i=0;i<count;i++){
+    let row=Math.floor(Math.random()*ROWS),r=Math.random(),type;
+    if(r<colossusChance) type=7;
+    else if(r<colossusChance+titanChance) type=6;
+    else if(r<colossusChance+titanChance+reaperChance) type=5;
+    else if(r<colossusChance+titanChance+reaperChance+lichChance) type=4;
+    else if(r<colossusChance+titanChance+reaperChance+lichChance+kingChance) type=3;
+    else if(r<colossusChance+titanChance+reaperChance+lichChance+kingChance+0.22) type=1;
+    else if(r<colossusChance+titanChance+reaperChance+lichChance+kingChance+0.35) type=2;
+    else type=0;
+    if(type===6) row=1+Math.floor(Math.random()*(ROWS-2));
+    list.push({row,type,delay:i*interval+40,hpMult});
+  }
+  // Inject the guaranteed World Serpent boss(es), spaced out through the wave
+  for(let s=0;s<serpentCount;s++){
+    let srow=1+Math.floor(Math.random()*(ROWS-2));
+    let sdelay=Math.floor(count*0.4)*interval + s*interval*8 + 40;
+    list.push({row:srow,type:8,delay:sdelay,hpMult});
+  }
+  // Inject the guaranteed Nightmare boss(es)
+  for(let s=0;s<nightmareCount;s++){
+    let nrow=1+Math.floor(Math.random()*(ROWS-2));
+    let ndelay=Math.floor(count*0.3)*interval + s*interval*10 + 40;
+    list.push({row:nrow,type:9,delay:ndelay,hpMult});
+  }
+  return list;
+}
+
+function startWave(){spawnList=buildWaveList(wave);spawnIndex=0;waveTimer=0;waveActive=true;}
+
+function spawnSkeleton(row,type,hpMult){
+  let t=SKELS[type],hp=Math.round(t.hp*hpMult);
+  skeletons.push({row,x:COLS*CELL+20,y:row*CELL+CELL/2,hp,maxHp:hp,speed:t.speed,baseSpeed:t.speed,reward:t.reward,emoji:t.emoji,size:t.size,type,attackTimer:0,hitFlash:0,slowed:0,frozen:0,inked:0,isKing:!!t.isKing,isLich:!!t.isLich,isReaper:!!t.isReaper,isTitan:!!t.isTitan,isColossus:!!t.isColossus,isSerpent:!!t.isSerpent,isNightmare:!!t.isNightmare,regen:t.regen||0,voidPulse:0,titanPulse:0,colossusPulse:0,serpentPulse:0,nightmarePulse:0,slamTimer:0});
+}
+
+// ========== COMBAT ==========
+function applyDmgToSkel(sk,dmg){
+  // Phantom ability: 30% chance to dodge the hit entirely
+  if(sk.skelAbility==='phantom'&&Math.random()<0.3){
+    starBeams.push({x:sk.x,y:sk.y,tx:sk.x,ty:sk.y-15,life:8,color:'#aaaaff'});
+    return 0;
+  }
+  let crit=rollCrit();
+  let d=Math.round(dmg*dmgMult()*crit);
+  // Armor ability: reduce incoming damage
+  if(sk.skelArmor>0)d=Math.round(d*(1-sk.skelArmor/100));
+  sk.hp-=d;
+  dealDamage(d);
+  if(crit>1){sk.hitFlash=12;for(let i=0;i<5;i++){let a=Math.random()*Math.PI*2;starBeams.push({x:sk.x,y:sk.y,tx:sk.x+Math.cos(a)*20,ty:sk.y+Math.sin(a)*20,life:10,color:'#FF3D3D'});}}
+  return d;
+}
+
+function coopSpawnOmega(col,row){
+  let candidates=[[col-1,row],[col+1,row],[col,row-1],[col,row+1],[col-2,row],[col+2,row]];
+  for(let [cc,rr] of candidates){if(cc>0&&cc<COLS&&rr>=0&&rr<ROWS&&!cells[rr][cc]){cells[rr][cc]={type:'omegaporg',level:0,hp:getStats('omegaporg',0).hp,timer:0,hitFlash:0};for(let i=0;i<3;i++)omegaRings.push({x:cc*CELL+CELL/2,y:rr*CELL+CELL/2,r:i*10,life:20,color:'#AFA9EC'});return;}}
+}
+
+function fireProjectile(col,row,dmg,isExplode){projectiles.push({x:col*CELL+CELL*0.75,y:row*CELL+CELL/2,row,speed:4,dmg,isExplode});}
+function fireCustomProjectile(col,row,dmg,speed,emoji,opts){
+  projectiles.push({x:col*CELL+CELL*0.75,y:row*CELL+CELL/2,row,speed:speed||4,dmg,isCustomProj:true,emoji:emoji||'⭐',
+    explode:!!opts.explode,chain:!!opts.chain,bouncesLeft:opts.bouncesLeft||0,freeze:opts.freeze||0,poison:!!opts.poison});
+}
+function fireGrapeProjectile(col,row,dmg,bounces){projectiles.push({x:col*CELL+CELL*0.75,y:row*CELL+CELL/2,row,speed:5,dmg,isGrape:true,bouncesLeft:bounces});}
+function fireInk(col,row,dmg,inkRows,slowFactor,inkDuration){
+  let cx=col*CELL+CELL/2,cy=row*CELL+CELL/2;
+  let rowsToHit=[row];for(let i=1;i<=inkRows;i++){if(row-i>=0)rowsToHit.push(row-i);if(row+i<ROWS)rowsToHit.push(row+i);}
+  for(let r of rowsToHit)projectiles.push({x:cx,y:r*CELL+CELL/2,row:r,speed:4,dmg,isInk:true,slowFactor,inkDuration});
+  for(let a=0;a<8;a++){let ang=(a/8)*Math.PI*2;inkSplats.push({x:cx,y:cy,vx:Math.cos(ang)*3,vy:Math.sin(ang)*3,life:20,size:6+Math.random()*6});}
+}
+
+function spawnBloodParticles(x,y,n){for(let i=0;i<n;i++){let a=Math.random()*Math.PI*2,spd=0.6+Math.random()*2.2;bloodParticles.push({x,y,vx:Math.cos(a)*spd,vy:Math.sin(a)*spd-0.5,life:30+Math.random()*20,size:3+Math.random()*5});}}
+function spawnStarBeam(x,y,tx,ty,color){starBeams.push({x,y,tx,ty,life:14,color:color||'#FFD700'});}
+function spawnOmegaRing(cx,cy,color){omegaRings.push({x:cx,y:cy,r:0,life:25,color:color||'#AFA9EC'});}
+function spawnVoidCrack(x,y){voidCracks.push({x,y,life:30,size:Math.random()*20+15,angle:Math.random()*Math.PI*2});}
+function spawnTitanShockwave(x,y){for(let i=0;i<4;i++)titanShockwaves.push({x,y,r:i*15,life:35,maxLife:35});}
+function spawnRemoveParticles(cx,cy,refund){for(let i=0;i<12;i++){let a=Math.random()*Math.PI*2,spd=1+Math.random()*2.5;removeParticles.push({x:cx,y:cy,vx:Math.cos(a)*spd,vy:Math.sin(a)*spd-2,life:40,size:4+Math.random()*4,refund,showText:i===0});}}
+
+function removeUnit(col,row){
+  let p=cells[row][col];if(!p||p.hp<=0)return;
+  let refund=getRefund(p);let cx=col*CELL+CELL/2,cy=row*CELL+CELL/2;
+  if(p.type==='diveporg')removeDiveUnit(col,row);
+  if(p.type==='porgspawner')megaRunners=megaRunners.filter(mr=>!(mr.spawnerCol===col&&mr.spawnerRow===row));
+  cells[row][col]=null;sun=Math.min(sun+refund,9999999);updateUI();spawnRemoveParticles(cx,cy,refund);
+}
+
+// Dive
+function getDiveUnit(col,row){return diveUnits.find(d=>d.col===col&&d.row===row);}
+function createDiveUnit(col,row){let nx=col*CELL+CELL/2,ny=row*CELL+CELL/2;diveUnits.push({col,row,x:nx,y:ny,nestX:nx,nestY:ny,state:'idle',timer:0,targetSkel:null,angle:0,trailPts:[]});}
+function removeDiveUnit(col,row){diveUnits=diveUnits.filter(d=>!(d.col===col&&d.row===row));}
+function updateDivePorg(col,row,p){
+  let s=getStats('diveporg',p.level||0),d=getDiveUnit(col,row);if(!d)return;
+  d.trailPts.unshift({x:d.x,y:d.y});if(d.trailPts.length>12)d.trailPts.pop();
+  if(d.state==='idle'){d.x=d.nestX;d.y=d.nestY;d.timer=(d.timer||0)+1;if(d.timer>=s.rate){let t=skeletons.filter(sk=>sk.hp>0).sort((a,b)=>a.x-b.x)[0];if(t){d.timer=0;d.state='ascending';d.targetSkel=t;d.ascendY=d.nestY-90;}}}
+  else if(d.state==='ascending'){d.y-=5;if(d.y<=d.ascendY)d.state='diving';}
+  else if(d.state==='diving'){
+    let sk=d.targetSkel;if(!sk||sk.hp<=0){let nt=skeletons.filter(sk2=>sk2.hp>0).sort((a,b)=>a.x-b.x)[0];if(nt){d.targetSkel=nt;sk=nt;}else{d.state='returning';return;}}
+    let dx=sk.x-d.x,dy=sk.y-d.y,dist=Math.hypot(dx,dy);d.angle=Math.atan2(dy,dx);
+    if(dist<11){d.x=sk.x;d.y=sk.y;d.state='impact';d.impactTimer=18;skeletons.filter(s2=>s2.hp>0&&Math.hypot(s2.x-sk.x,s2.y-sk.y)<s.aoeRadius).forEach(s2=>{applyDmgToSkel(s2,s.dmg);s2.hitFlash=10;});explosions.push({x:sk.x,y:sk.y,life:22,isDive:true,big:true});for(let i=0;i<3;i++)omegaRings.push({x:sk.x,y:sk.y,r:i*8,life:18,color:'#D85A30'});}
+    else{d.x+=dx/dist*7;d.y+=dy/dist*7;}
+  }
+  else if(d.state==='impact'){d.impactTimer--;if(d.impactTimer<=0)d.state='returning';}
+  else if(d.state==='returning'){let dx=d.nestX-d.x,dy=d.nestY-d.y,dist=Math.hypot(dx,dy);if(dist<6){d.x=d.nestX;d.y=d.nestY;d.state='idle';d.targetSkel=null;}else{d.angle=Math.atan2(dy,dx);d.x+=dx/dist*4;d.y+=dy/dist*4;}}
+}
+
+// Upgrade
+function showUpgrade(col,row){
+  if(removeMode)return;
+  let p=cells[row][col];if(!p||p.hp<=0){closeUpgrade();return;}
+  selectedCell={col,row};let lvl=p.level||0;
+  if(p.type.startsWith('custom_')){
+    let cp=getCustomPorg(p.type);
+    let nm=cp?cp.name:'Custom';let em=cp?cp.emoji:'❓';
+    if(lvl>=MAX_LEVEL){upgradeInfo.textContent=`${em} ${nm} — MAX LEVEL ⭐`;upgradeBtn.style.display='none';}
+    else{upgradeInfo.textContent=`${em} ${nm} Lv${lvl}→${lvl+1} (boosts HP, damage & fire rate)`;upgradeBtn.textContent=`Upgrade 💰${upgradeCost(p.type,lvl)}`;upgradeBtn.style.display='';}
+    upgradePanel.classList.add('show');return;
+  }
+  if(lvl>=MAX_LEVEL){upgradeInfo.textContent=`${porgDef(p.type).emoji} MAX LEVEL`;upgradeBtn.style.display='none';}
+  else{upgradeInfo.textContent=`${porgDef(p.type).emoji} Lv${lvl}→${lvl+1}: ${upgradeLabel(p.type,lvl+1)}`;upgradeBtn.textContent=`Upgrade 💰${upgradeCost(p.type,lvl)}`;upgradeBtn.style.display='';}
+  upgradePanel.classList.add('show');
+}
+function doUpgrade(){
+  if(!selectedCell)return;let{col,row}=selectedCell,p=cells[row][col];if(!p)return;
+  let lvl=p.level||0;if(lvl>=MAX_LEVEL)return;let cost=upgradeCost(p.type,lvl);if(sun<cost)return;
+  sun-=cost;updateUI();p.level=lvl+1;let s=getStats(p.type,p.level);let mx=Math.round(s.hp*hpMult());p.maxHp=mx;p.hp=Math.min(p.hp+Math.round(mx*0.5),mx);p.timer=0;
+  if(p.type==='diveporg'){let d=getDiveUnit(col,row);if(d){d.level=p.level;d.timer=0;}}
+  closeUpgrade();
+}
+function closeUpgrade(){upgradePanel.classList.remove('show');selectedCell=null;}
+
+// ========== DRAW ==========
+function drawCell(c,r){
+  ctx.fillStyle=(c+r)%2===0?'#a8d87a':'#90c862';ctx.fillRect(c*CELL,r*CELL,CELL,CELL);
+  if(removeMode&&cells[r][c]&&cells[r][c].hp>0){ctx.save();ctx.globalAlpha=0.18+0.08*Math.sin(frameCount*0.15+c+r);ctx.fillStyle='#cc0000';ctx.fillRect(c*CELL,r*CELL,CELL,CELL);ctx.restore();}
+}
+function drawGrid(){for(let r=0;r<ROWS;r++)for(let c=0;c<COLS;c++)drawCell(c,r);ctx.fillStyle='#7ab850';ctx.fillRect(0,0,CELL*0.35,ROWS*CELL);}
+function drawHpBar(x,y,w,hp,maxHp,color){ctx.fillStyle='#c00';ctx.fillRect(x,y,w,4);let ratio=Math.max(0,Math.min(1,hp/maxHp));ctx.fillStyle=color||'#3a3';ctx.fillRect(x,y,w*ratio,4);}
+function fmtBig(n){n=Math.max(0,Math.round(n));if(n>=1e9)return (n/1e9).toFixed(2).replace(/\.?0+$/,'')+'B';if(n>=1e6)return (n/1e6).toFixed(2).replace(/\.?0+$/,'')+'M';if(n>=1e3)return (n/1e3).toFixed(1).replace(/\.?0+$/,'')+'K';return n.toLocaleString();}
+function drawUpgradeStar(col,row,p){if(!p.level)return;let stars=p.level>=5?'★★★★★':p.level>=4?'★★★★':p.level>=3?'★★★':p.level>=2?'★★':'★';ctx.fillStyle=p.level>=5?'#FF2D55':p.level>=4?'#BF5AF2':p.level>=3?'#FF3DCB':p.level>=2?'#f5c400':'#aaa';ctx.font=(p.level>=4?'7px':'9px')+' serif';ctx.textAlign='center';ctx.textBaseline='middle';ctx.fillText(stars,col*CELL+CELL-13,row*CELL+8);}
+function drawSunPorgGlow(col,row){let cx=col*CELL+CELL/2,cy=row*CELL+CELL/2,pv=0.55+0.25*Math.sin(frameCount*0.08);let g=ctx.createRadialGradient(cx,cy,2,cx,cy,CELL*0.6);g.addColorStop(0,`rgba(255,230,50,${pv})`);g.addColorStop(1,'rgba(255,200,0,0)');ctx.fillStyle=g;ctx.beginPath();ctx.arc(cx,cy,CELL*0.6,0,Math.PI*2);ctx.fill();}
+
+function drawRemoveParticles(){
+  for(let rp of removeParticles){ctx.save();ctx.globalAlpha=rp.life/40;ctx.fillStyle='#3B6D11';ctx.beginPath();ctx.arc(rp.x,rp.y,rp.size,0,Math.PI*2);ctx.fill();if(rp.showText&&rp.life>20){ctx.globalAlpha=Math.min(1,(rp.life-20)/20);ctx.fillStyle='#27500A';ctx.font='bold 12px sans-serif';ctx.textAlign='center';ctx.textBaseline='middle';ctx.fillText(`+${rp.refund}☀️`,rp.x,rp.y-20);}ctx.restore();}
+}
+
+function drawPlant(col,row,p){
+  let cx=col*CELL+CELL/2,cy=row*CELL+CELL/2,s=getStats(p.type,p.level||0);
+  if(removeMode){ctx.save();ctx.globalAlpha=0.82;ctx.fillStyle='#c00';ctx.font='bold 28px sans-serif';ctx.textAlign='center';ctx.textBaseline='middle';ctx.fillText('✕',cx,cy);ctx.fillStyle='#27500A';ctx.font='bold 10px sans-serif';ctx.fillText(`+${getRefund(p)}☀️`,cx,cy+20);ctx.restore();return;}
+  if(p.type==='grapes'){
+    let pulse=0.3+0.18*Math.sin(frameCount*0.09+col);let g=ctx.createRadialGradient(cx,cy,2,cx,cy,CELL*0.65);g.addColorStop(0,`rgba(127,119,221,${pulse})`);g.addColorStop(1,'rgba(83,74,183,0)');ctx.fillStyle=g;ctx.beginPath();ctx.arc(cx,cy,CELL*0.65,0,Math.PI*2);ctx.fill();
+    let orbs=Math.min(6,s.bounces);for(let i=0;i<orbs;i++){let a=(i/orbs)*Math.PI*2+frameCount*0.06;ctx.font='9px serif';ctx.textAlign='center';ctx.textBaseline='middle';ctx.fillText('🍇',cx+Math.cos(a)*CELL*0.33,cy+Math.sin(a)*CELL*0.33);}
+    if(p.hitFlash>0)ctx.globalAlpha=0.5;ctx.font=`${CELL*0.55}px serif`;ctx.textAlign='center';ctx.textBaseline='middle';ctx.fillText('🍇',cx,cy);ctx.globalAlpha=1;
+    drawHpBar(col*CELL+4,row*CELL+4,CELL-8,p.hp,(p.maxHp||s.hp),'#7F77DD');ctx.fillStyle='rgba(127,119,221,0.9)';ctx.font='bold 8px sans-serif';ctx.textAlign='center';ctx.fillText(`x${s.bounces}`,cx,row*CELL+CELL-12);drawUpgradeStar(col,row,p);return;
+  }
+  if(p.type==='octopus'){
+    let pulse=0.3+0.2*Math.sin(frameCount*0.07+col);let g=ctx.createRadialGradient(cx,cy,4,cx,cy,CELL*0.8);g.addColorStop(0,`rgba(212,83,126,${pulse*0.6})`);g.addColorStop(1,'rgba(153,53,86,0)');ctx.fillStyle=g;ctx.beginPath();ctx.arc(cx,cy,CELL*0.8,0,Math.PI*2);ctx.fill();
+    ctx.save();for(let t=0;t<8;t++){let a=(t/8)*Math.PI*2+frameCount*0.025,len=CELL*(0.38+0.12*Math.sin(frameCount*0.08+t));ctx.strokeStyle=`rgba(212,83,126,${0.5+pulse*0.3})`;ctx.lineWidth=2.5;ctx.beginPath();ctx.moveTo(cx,cy);ctx.quadraticCurveTo(cx+Math.cos(a+0.4)*len*0.6,cy+Math.sin(a+0.4)*len*0.6,cx+Math.cos(a)*len,cy+Math.sin(a)*len);ctx.stroke();}ctx.restore();
+    if(p.hitFlash>0)ctx.globalAlpha=0.5;ctx.font=`${CELL*0.58}px serif`;ctx.textAlign='center';ctx.textBaseline='middle';ctx.fillText('🐙',cx,cy);ctx.globalAlpha=1;drawHpBar(col*CELL+4,row*CELL+4,CELL-8,p.hp,(p.maxHp||s.hp),'#D4537E');drawUpgradeStar(col,row,p);return;
+  }
+  if(p.type==='diveporg'){
+    let d=getDiveUnit(col,row);if(!d)return;let isFlying=d.state!=='idle';
+    ctx.globalAlpha=isFlying?0.35:1;ctx.font=`${CELL*0.42}px serif`;ctx.textAlign='center';ctx.textBaseline='middle';ctx.fillText('🪹',cx,cy);ctx.globalAlpha=1;
+    let pct=isFlying?1:(d.timer||0)/s.rate;ctx.fillStyle='rgba(0,0,0,0.25)';ctx.fillRect(col*CELL+4,row*CELL+CELL-10,CELL-8,5);ctx.fillStyle=isFlying?'#D85A30':'#f5c400';ctx.fillRect(col*CELL+4,row*CELL+CELL-10,(CELL-8)*pct,5);
+    drawHpBar(col*CELL+4,row*CELL+4,CELL-8,p.hp,(p.maxHp||s.hp),'#F0997B');drawUpgradeStar(col,row,p);
+    if(!isFlying)return;
+    ctx.save();ctx.globalAlpha=0.3+0.15*Math.sin(frameCount*0.2);ctx.strokeStyle='#F0997B';ctx.lineWidth=2;ctx.beginPath();ctx.arc(d.x,d.y,22,0,Math.PI*2);ctx.stroke();ctx.restore();
+    for(let i=0;i<d.trailPts.length;i++){ctx.globalAlpha=(1-i/d.trailPts.length)*0.35;ctx.font=`${CELL*0.3}px serif`;ctx.textAlign='center';ctx.textBaseline='middle';ctx.fillText('🦅',d.trailPts[i].x,d.trailPts[i].y);}ctx.globalAlpha=1;
+    ctx.save();ctx.translate(d.x,d.y);if(d.state==='diving')ctx.rotate(d.angle);ctx.font=`${CELL*(d.state==='impact'?0.7:0.5)}px serif`;ctx.textAlign='center';ctx.textBaseline='middle';ctx.fillText('🦅',0,0);ctx.restore();
+    ctx.fillStyle='rgba(240,153,123,0.9)';ctx.font='bold 8px sans-serif';ctx.textAlign='center';ctx.fillText('INVULN',d.x,d.y-28);return;
+  }
+  if(p.type==='bloodvine'){
+    let pulse=0.4+0.25*Math.sin(frameCount*0.06+col*1.3),reach=s.range*CELL;
+    ctx.save();ctx.globalAlpha=0.07;ctx.fillStyle='#8b0000';ctx.beginPath();ctx.arc(cx,cy,reach,0,Math.PI*2);ctx.fill();ctx.globalAlpha=0.18;ctx.strokeStyle='#cc0020';ctx.lineWidth=2;ctx.beginPath();ctx.arc(cx,cy,reach,0,Math.PI*2);ctx.stroke();ctx.restore();
+    ctx.save();for(let t=0;t<8;t++){let ba=(t/8)*Math.PI*2+frameCount*0.012,len=reach*(0.65+0.25*Math.sin(frameCount*0.04+t*1.1));ctx.strokeStyle=`rgba(${100+t*10},0,${20+t*5},${pulse+0.15})`;ctx.lineWidth=1.5;ctx.beginPath();ctx.moveTo(cx,cy);ctx.quadraticCurveTo(cx+Math.cos(ba+0.4)*len*0.55,cy+Math.sin(ba+0.4)*len*0.55,cx+Math.cos(ba)*len,cy+Math.sin(ba)*len);ctx.stroke();}ctx.restore();
+    let g=ctx.createRadialGradient(cx,cy,2,cx,cy,CELL*0.75);g.addColorStop(0,`rgba(200,0,40,${pulse*0.7})`);g.addColorStop(1,'rgba(100,0,20,0)');ctx.fillStyle=g;ctx.beginPath();ctx.arc(cx,cy,CELL*0.75,0,Math.PI*2);ctx.fill();
+    if(p.hitFlash>0)ctx.globalAlpha=0.5;ctx.font=`${CELL*0.55}px serif`;ctx.textAlign='center';ctx.textBaseline='middle';ctx.fillText('🌿',cx,cy);ctx.globalAlpha=1;drawHpBar(col*CELL+4,row*CELL+4,CELL-8,p.hp,(p.maxHp||s.hp));drawUpgradeStar(col,row,p);return;
+  }
+  if(p.type==='astroflora'){
+    let reach=s.range*CELL,pulse=0.3+0.2*Math.sin(frameCount*0.07+col);
+    ctx.save();ctx.globalAlpha=0.07;ctx.fillStyle='#1D9E75';ctx.beginPath();ctx.arc(cx,cy,reach,0,Math.PI*2);ctx.fill();ctx.globalAlpha=0.25;ctx.strokeStyle='#5DCAA5';ctx.lineWidth=1.5;ctx.beginPath();ctx.arc(cx,cy,reach,0,Math.PI*2);ctx.stroke();ctx.restore();
+    for(let i=0;i<5;i++){let a=(i/5)*Math.PI*2+frameCount*0.03;ctx.font=`${10+(p.level||0)*2}px serif`;ctx.textAlign='center';ctx.textBaseline='middle';ctx.fillText('✦',cx+Math.cos(a)*CELL*0.35,cy+Math.sin(a)*CELL*0.35);}
+    let g=ctx.createRadialGradient(cx,cy,2,cx,cy,CELL*0.6);g.addColorStop(0,`rgba(29,158,117,${pulse*0.8})`);g.addColorStop(1,'rgba(15,110,86,0)');ctx.fillStyle=g;ctx.beginPath();ctx.arc(cx,cy,CELL*0.6,0,Math.PI*2);ctx.fill();
+    if(p.hitFlash>0)ctx.globalAlpha=0.5;ctx.font=`${CELL*0.58}px serif`;ctx.textAlign='center';ctx.textBaseline='middle';ctx.fillText('🌸',cx,cy);ctx.globalAlpha=1;drawHpBar(col*CELL+4,row*CELL+4,CELL-8,p.hp,(p.maxHp||s.hp),'#5DCAA5');drawUpgradeStar(col,row,p);return;
+  }
+  if(p.type==='starporg'){
+    let pulse=0.3+0.2*Math.sin(frameCount*0.1);let g=ctx.createRadialGradient(cx,cy,4,cx,cy,CELL*0.85);g.addColorStop(0,`rgba(255,220,0,${0.5+pulse})`);g.addColorStop(0.5,`rgba(255,150,0,${0.2+pulse*0.5})`);g.addColorStop(1,'rgba(255,100,0,0)');ctx.fillStyle=g;ctx.beginPath();ctx.arc(cx,cy,CELL*0.85,0,Math.PI*2);ctx.fill();
+    let orbs=4+(p.level||0)*2;for(let i=0;i<orbs;i++){let a=(i/orbs)*Math.PI*2+frameCount*0.07;ctx.font='12px serif';ctx.textAlign='center';ctx.textBaseline='middle';ctx.fillText('⭐',cx+Math.cos(a)*CELL*0.38,cy+Math.sin(a)*CELL*0.38);}
+    if(p.hitFlash>0)ctx.globalAlpha=0.5;ctx.font=`${CELL*0.6}px serif`;ctx.textAlign='center';ctx.textBaseline='middle';ctx.fillText('✨',cx,cy);ctx.globalAlpha=1;drawHpBar(col*CELL+4,row*CELL+4,CELL-8,p.hp,(p.maxHp||s.hp),'#f5c400');drawUpgradeStar(col,row,p);return;
+  }
+  if(p.type==='omegaporg'){
+    let pulse=0.35+0.2*Math.sin(frameCount*0.09),reach=s.range*CELL;
+    ctx.save();ctx.globalAlpha=0.06;ctx.fillStyle='#7F77DD';ctx.beginPath();ctx.arc(cx,cy,reach,0,Math.PI*2);ctx.fill();ctx.globalAlpha=0.2;ctx.strokeStyle='#AFA9EC';ctx.lineWidth=1.5;ctx.beginPath();ctx.arc(cx,cy,reach,0,Math.PI*2);ctx.stroke();ctx.restore();
+    for(let ring=0;ring<3;ring++){ctx.strokeStyle=`rgba(180,160,255,${pulse-ring*0.08})`;ctx.lineWidth=2.5-ring*0.5;ctx.beginPath();ctx.arc(cx,cy,CELL*(0.42+ring*0.15),0,Math.PI*2);ctx.stroke();}
+    let orbs=6+(p.level||0)*2;for(let i=0;i<orbs;i++){let a=(i/orbs)*Math.PI*2+frameCount*0.05*(i%2===0?1:-1);ctx.fillStyle='rgba(200,180,255,0.9)';ctx.beginPath();ctx.arc(cx+Math.cos(a)*CELL*0.44,cy+Math.sin(a)*CELL*0.44,4,0,Math.PI*2);ctx.fill();}
+    let cg=ctx.createRadialGradient(cx,cy,2,cx,cy,CELL*0.5);cg.addColorStop(0,`rgba(180,150,255,${pulse*0.8})`);cg.addColorStop(1,'rgba(80,60,180,0)');ctx.fillStyle=cg;ctx.beginPath();ctx.arc(cx,cy,CELL*0.5,0,Math.PI*2);ctx.fill();
+    if(p.hitFlash>0)ctx.globalAlpha=0.4;ctx.font=`${CELL*0.6}px serif`;ctx.textAlign='center';ctx.textBaseline='middle';ctx.fillText('🌀',cx,cy);ctx.globalAlpha=1;drawHpBar(col*CELL+4,row*CELL+4,CELL-8,p.hp,(p.maxHp||s.hp),'#AFA9EC');drawUpgradeStar(col,row,p);return;
+  }
+  if(p.type==='coop'){
+    let pct=(p.timer||0)/COOP_FRAMES,secsLeft=Math.ceil((COOP_FRAMES-(p.timer||0))/FPS);
+    let pulse=0.25+0.15*Math.sin(frameCount*0.07);let g=ctx.createRadialGradient(cx,cy,4,cx,cy,CELL*0.7);g.addColorStop(0,`rgba(160,140,255,${pulse})`);g.addColorStop(1,'rgba(80,60,180,0)');ctx.fillStyle=g;ctx.beginPath();ctx.arc(cx,cy,CELL*0.7,0,Math.PI*2);ctx.fill();
+    for(let i=0;i<3;i++){let a=(i/3)*Math.PI*2+frameCount*0.04;ctx.font='10px serif';ctx.textAlign='center';ctx.textBaseline='middle';ctx.fillText('🌀',cx+Math.cos(a)*CELL*0.36,cy+Math.sin(a)*CELL*0.36);}
+    if(p.hitFlash>0)ctx.globalAlpha=0.5;ctx.font=`${CELL*0.52}px serif`;ctx.textAlign='center';ctx.textBaseline='middle';ctx.fillText('🏠',cx,cy);ctx.globalAlpha=1;
+    drawHpBar(col*CELL+4,row*CELL+4,CELL-8,p.hp,(p.maxHp||s.hp),'#AFA9EC');ctx.fillStyle='rgba(0,0,0,0.25)';ctx.fillRect(col*CELL+4,row*CELL+CELL-10,CELL-8,5);ctx.fillStyle='#AFA9EC';ctx.fillRect(col*CELL+4,row*CELL+CELL-10,(CELL-8)*pct,5);
+    ctx.fillStyle='rgba(200,180,255,0.95)';ctx.font='bold 9px sans-serif';ctx.textAlign='center';ctx.fillText(secsLeft+'s',cx,row*CELL+CELL-14);drawUpgradeStar(col,row,p);return;
+  }
+  if(p.type==='porgspawner'){
+    let s2=getStats('porgspawner',p.level||0);
+    let pct=(p.timer||0)/s2.rate;
+    let g=ctx.createRadialGradient(cx,cy,2,cx,cy,CELL*0.7);
+    g.addColorStop(0,`rgba(255,200,80,${0.3+pct*0.6})`);g.addColorStop(1,'rgba(255,140,0,0)');
+    ctx.fillStyle=g;ctx.beginPath();ctx.arc(cx,cy,CELL*0.7,0,Math.PI*2);ctx.fill();
+    if(pct>0.5){
+      ctx.save();ctx.globalAlpha=(pct-0.5)*2*0.7;ctx.strokeStyle='#ff8800';ctx.lineWidth=1.5;
+      for(let i=0;i<4;i++){let a=(i/4)*Math.PI*2+0.3;ctx.beginPath();ctx.moveTo(cx,cy);ctx.lineTo(cx+Math.cos(a)*CELL*0.35*pct,cy+Math.sin(a)*CELL*0.35*pct);ctx.stroke();}
+      ctx.restore();
+    }
+    if(p.hitFlash>0)ctx.globalAlpha=0.5;
+    let scale=1+pct*0.2;
+    ctx.font=`${CELL*0.55*scale}px serif`;ctx.textAlign='center';ctx.textBaseline='middle';
+    ctx.fillText('🥚',cx,cy);ctx.globalAlpha=1;
+    drawHpBar(col*CELL+4,row*CELL+4,CELL-8,p.hp,s2.hp,'#ff8800');
+    ctx.fillStyle='rgba(0,0,0,0.3)';ctx.fillRect(col*CELL+4,row*CELL+CELL-10,CELL-8,5);
+    ctx.fillStyle=`rgba(255,${Math.floor(120+pct*135)},0,0.9)`;
+    ctx.fillRect(col*CELL+4,row*CELL+CELL-10,(CELL-8)*pct,5);
+    drawUpgradeStar(col,row,p);
+    return;
+  }
+  if(p.type==='suncollector'){
+    let s2=getStats('suncollector',p.level||0);
+    let reach=s2.collectRadius*CELL;
+    // draw collection radius ring
+    let pulse=0.3+0.2*Math.sin(frameCount*0.09+col*0.7);
+    ctx.save();ctx.globalAlpha=0.08+0.05*Math.sin(frameCount*0.06);
+    ctx.fillStyle='#f5c400';ctx.beginPath();ctx.arc(cx,cy,reach,0,Math.PI*2);ctx.fill();
+    ctx.globalAlpha=0.3+0.1*Math.sin(frameCount*0.08);
+    ctx.strokeStyle='#f5c400';ctx.lineWidth=1.5;
+    ctx.beginPath();ctx.arc(cx,cy,reach,0,Math.PI*2);ctx.stroke();ctx.restore();
+    // orbiting sun sparks
+    for(let i=0;i<4;i++){
+      let a=(i/4)*Math.PI*2+frameCount*0.05;
+      ctx.font='11px serif';ctx.textAlign='center';ctx.textBaseline='middle';
+      ctx.fillText('✨',cx+Math.cos(a)*CELL*0.32,cy+Math.sin(a)*CELL*0.32);
+    }
+    // glow
+    let g=ctx.createRadialGradient(cx,cy,2,cx,cy,CELL*0.6);
+    g.addColorStop(0,`rgba(255,210,0,${pulse*0.7})`);g.addColorStop(1,'rgba(255,180,0,0)');
+    ctx.fillStyle=g;ctx.beginPath();ctx.arc(cx,cy,CELL*0.6,0,Math.PI*2);ctx.fill();
+    if(p.hitFlash>0)ctx.globalAlpha=0.5;
+    let bob=Math.sin(frameCount*0.08+col)*2.5;
+    ctx.font=`${CELL*0.58}px serif`;ctx.textAlign='center';ctx.textBaseline='middle';
+    ctx.fillText('🌻',cx,cy+bob);ctx.globalAlpha=1;
+    drawHpBar(col*CELL+4,row*CELL+4,CELL-8,p.hp,s2.hp,'#f5c400');
+    drawUpgradeStar(col,row,p);
+    return;
+  }
+  if(p.type.startsWith('custom_')){
+    let cp=getCustomPorg(p.type);
+    let abil=cp?(cp.ability||(cp.splash?'splash':'none')):'none';
+    // ability-tinted aura
+    const abilColor={none:'160,140,255',splash:'255,140,0',sun:'255,210,0',freeze:'93,202,165',chain:'255,224,102',poison:'127,186,0',pierce:'255,215,0',vampiric:'192,57,43',slowfield:'136,136,136'}[abil]||'160,140,255';
+    let pulse=0.25+0.18*Math.sin(frameCount*0.08+col);
+    let g=ctx.createRadialGradient(cx,cy,2,cx,cy,CELL*0.6);
+    g.addColorStop(0,`rgba(${abilColor},${pulse})`);g.addColorStop(1,`rgba(${abilColor},0)`);
+    ctx.fillStyle=g;ctx.beginPath();ctx.arc(cx,cy,CELL*0.6,0,Math.PI*2);ctx.fill();
+    if(p.hitFlash>0)ctx.globalAlpha=0.5;
+    let bob=Math.sin(frameCount*0.1+col)*2;
+    ctx.font=`${CELL*0.55}px serif`;ctx.textAlign='center';ctx.textBaseline='middle';
+    ctx.fillText(cp?cp.emoji:'❓',cx,cy+bob);ctx.globalAlpha=1;
+    drawHpBar(col*CELL+4,row*CELL+4,CELL-8,p.hp,(p.maxHp||s.hp),`rgb(${abilColor})`);
+    let er=Math.max(8,Math.round(s.rate/(1+(globalState.powerUps.global_speed||0)*0.1)));
+    let pct=(p.timer||0)/er;
+    ctx.fillStyle='rgba(0,0,0,0.25)';ctx.fillRect(col*CELL+4,row*CELL+CELL-10,CELL-8,5);
+    ctx.fillStyle=`rgb(${abilColor})`;ctx.fillRect(col*CELL+4,row*CELL+CELL-10,(CELL-8)*Math.min(1,pct),5);
+    drawUpgradeStar(col,row,p);
+    return;
+  }
+  if(p.type==='sunporg')drawSunPorgGlow(col,row);
+  if(p.hitFlash>0)ctx.globalAlpha=0.5+0.5*Math.sin(p.hitFlash*0.8);
+  let bounce=(p.type==='sunporg')?Math.sin(frameCount*0.07+col)*3:(p.type==='quickporg')?Math.sin(frameCount*0.18+col*0.9)*2.5:0;
+  ctx.font=`${CELL*(p.type==='quickporg'?0.46:0.55)}px serif`;ctx.textAlign='center';ctx.textBaseline='middle';ctx.fillText(PORGS[p.type].emoji,cx,cy+bounce);ctx.globalAlpha=1;
+  drawHpBar(col*CELL+4,row*CELL+4,CELL-8,p.hp,(p.maxHp||s.hp),p.type==='quickporg'?'#88cc44':undefined);
+  if(p.type==='sunporg'){let er=Math.max(10,Math.round(s.rate/(1+(globalState.powerUps.global_speed||0)*0.1)));let pct=(p.timer||0)/er;ctx.fillStyle='rgba(0,0,0,0.25)';ctx.fillRect(col*CELL+4,row*CELL+CELL-10,CELL-8,5);ctx.fillStyle='#f5c400';ctx.fillRect(col*CELL+4,row*CELL+CELL-10,(CELL-8)*Math.min(1,pct),5);}
+  drawUpgradeStar(col,row,p);
+}
+
+function drawSkeleton(s){
+  if(s.isNightmare){
+    s.nightmarePulse=(s.nightmarePulse||0)+1;
+    let np=s.nightmarePulse;
+    let pulse=0.4+0.3*Math.sin(np*0.08);
+    let healPct=s.hp/s.maxHp;
+    // Dark crimson-purple nightmare aura, two rows tall
+    ctx.save();ctx.globalAlpha=0.35+0.12*Math.sin(np*0.06);
+    let bg=ctx.createRadialGradient(s.x,s.y,4,s.x,s.y,s.size*2.4);
+    bg.addColorStop(0,'#1a0015');bg.addColorStop(0.5,'#2a0020');bg.addColorStop(1,'rgba(20,0,15,0)');
+    ctx.fillStyle=bg;ctx.fillRect(0,(s.row-0.5)*CELL,s.x+s.size*2.4,CELL*2);ctx.restore();
+    // Writhing shadow tendrils
+    ctx.save();
+    for(let t=0;t<18;t++){
+      let a=(t/18)*Math.PI*2+np*0.012;
+      let len=s.size*(1.2+0.7*Math.sin(np*0.05+t*1.3));
+      ctx.strokeStyle=`rgba(${140+t*4},${20+t*3},${120+t*4},${0.4+pulse*0.25})`;
+      ctx.lineWidth=3.5;
+      ctx.beginPath();ctx.moveTo(s.x,s.y);
+      let mx=s.x+Math.cos(a+0.5)*len*0.6, my=s.y+Math.sin(a+0.5)*len*0.6;
+      ctx.quadraticCurveTo(mx,my,s.x+Math.cos(a)*len,s.y+Math.sin(a)*len);
+      ctx.stroke();
+    }
+    ctx.restore();
+    // Pulsing dark rings
+    for(let i=4;i>=0;i--){
+      let r2=s.size*(1.3+i*0.4)+Math.sin(np*0.06+i)*9;
+      ctx.save();ctx.globalAlpha=(0.16-i*0.025)*(pulse+0.1);
+      ctx.strokeStyle=i%2===0?'#8e2de2':'#c0392b';ctx.lineWidth=3;
+      ctx.beginPath();ctx.arc(s.x,s.y,r2,0,Math.PI*2);ctx.stroke();ctx.restore();
+    }
+    // Floating skull wisps orbiting
+    for(let i=0;i<7;i++){
+      let a=(i/7)*Math.PI*2+np*0.03*(i%2===0?1:-1);
+      ctx.font='13px serif';ctx.textAlign='center';ctx.textBaseline='middle';
+      ctx.globalAlpha=0.6+0.3*Math.sin(np*0.1+i);
+      ctx.fillText(i%2===0?'💀':'🔥',s.x+Math.cos(a)*s.size*1.5,s.y+Math.sin(a)*s.size*1.5);
+      ctx.globalAlpha=1;
+    }
+    // Healing glow aura — brightens when regenerating (always, since it constantly heals)
+    let healGlow=0.4+0.4*Math.sin(np*0.15);
+    let hg=ctx.createRadialGradient(s.x,s.y,4,s.x,s.y,s.size*1.1);
+    hg.addColorStop(0,`rgba(160,40,200,${pulse*0.7})`);
+    hg.addColorStop(0.6,`rgba(200,40,60,${pulse*0.4})`);
+    hg.addColorStop(1,'rgba(80,0,60,0)');
+    ctx.fillStyle=hg;ctx.beginPath();ctx.arc(s.x,s.y,s.size*1.1,0,Math.PI*2);ctx.fill();
+    // green regen sparkles ring
+    if(healPct<1){
+      ctx.save();ctx.globalAlpha=0.5+0.3*Math.sin(np*0.2);
+      for(let i=0;i<6;i++){let a=(i/6)*Math.PI*2-np*0.05;ctx.fillStyle='#2ecc71';ctx.font='10px serif';ctx.textAlign='center';ctx.textBaseline='middle';ctx.fillText('✚',s.x+Math.cos(a)*s.size*0.9,s.y+Math.sin(a)*s.size*0.9);}
+      ctx.restore();
+    }
+    if(s.inked>0){ctx.save();ctx.globalAlpha=0.4;ctx.fillStyle='#D4537E';ctx.beginPath();ctx.arc(s.x,s.y,s.size,0,Math.PI*2);ctx.fill();ctx.restore();}
+    else if(s.frozen>0){ctx.save();ctx.globalAlpha=0.5;ctx.fillStyle='#5DCAA5';ctx.beginPath();ctx.arc(s.x,s.y,s.size,0,Math.PI*2);ctx.fill();ctx.restore();}
+    if(s.hitFlash>0)ctx.globalAlpha=0.3+0.7*Math.abs(Math.sin(s.hitFlash));
+    // Nightmare face
+    ctx.font=`${s.size}px serif`;ctx.textAlign='center';ctx.textBaseline='middle';
+    ctx.fillText('👹',s.x,s.y);ctx.globalAlpha=1;
+    // Title
+    ctx.save();ctx.shadowColor='#c0392b';ctx.shadowBlur=8;
+    ctx.fillStyle='rgba(220,80,200,0.98)';ctx.font='bold 11px sans-serif';ctx.textAlign='center';
+    ctx.fillText('👹 NIGHTMARE 👹',s.x,s.y-s.size/2-20);
+    ctx.restore();
+    // HP bar
+    let bw=s.size*2.8;
+    drawHpBar(s.x-bw/2,s.y-s.size/2-12,bw,s.hp,s.maxHp,'#a020c0');
+    ctx.fillStyle='#fff';ctx.font='bold 9px sans-serif';ctx.textAlign='center';
+    ctx.fillText(fmtBig(s.hp)+' HP 💚',s.x,s.y-s.size/2-14);
+    return;
+  }
+  if(s.isSerpent){
+    s.serpentPulse=(s.serpentPulse||0)+1;
+    let sp=s.serpentPulse;
+    let pulse=0.35+0.25*Math.sin(sp*0.06);
+    // Cosmic void aura — fills two rows, emerald-violet
+    ctx.save();ctx.globalAlpha=0.35+0.12*Math.sin(sp*0.05);
+    let bgGrad=ctx.createLinearGradient(0,(s.row-0.5)*CELL,s.x+s.size*2,(s.row+1.5)*CELL);
+    bgGrad.addColorStop(0,'#0a0020');bgGrad.addColorStop(0.5,'#06201a');bgGrad.addColorStop(1,'#0a0020');
+    ctx.fillStyle=bgGrad;
+    ctx.fillRect(0,(s.row-0.5)*CELL,s.x+s.size*2.2,CELL*2);ctx.restore();
+    // Serpent body — segmented dragon scales trailing to the right (where it came from)
+    for(let seg=10;seg>=1;seg--){
+      let segX=s.x+seg*s.size*0.55;
+      let segY=s.y+Math.sin(sp*0.05+seg*0.6)*s.size*0.4;
+      let segSize=s.size*(0.85-seg*0.05);
+      if(segSize<6)continue;
+      let hue=seg%2===0?'rgba(80,255,180,':'rgba(150,80,255,';
+      ctx.save();ctx.globalAlpha=(1-seg/12)*0.7;
+      // scale glow
+      let sg=ctx.createRadialGradient(segX,segY,2,segX,segY,segSize);
+      sg.addColorStop(0,hue+(pulse*0.8)+')');sg.addColorStop(1,hue+'0)');
+      ctx.fillStyle=sg;ctx.beginPath();ctx.arc(segX,segY,segSize,0,Math.PI*2);ctx.fill();
+      ctx.font=`${segSize*1.4}px serif`;ctx.textAlign='center';ctx.textBaseline='middle';
+      ctx.fillText('🟢',segX,segY);
+      ctx.restore();
+    }
+    // Pulsing void rings around the head
+    for(let i=4;i>=0;i--){
+      let r2=s.size*(1.3+i*0.45)+Math.sin(sp*0.05+i)*10;
+      ctx.save();ctx.globalAlpha=(0.16-i*0.025)*(pulse+0.1);
+      ctx.strokeStyle=i%2===0?'#50ffb4':'#9650ff';ctx.lineWidth=3;
+      ctx.beginPath();ctx.arc(s.x,s.y,r2,0,Math.PI*2);ctx.stroke();ctx.restore();
+    }
+    // Energy tendrils
+    ctx.save();
+    for(let t=0;t<14;t++){
+      let a=(t/14)*Math.PI*2+sp*0.01;
+      let len=s.size*(1.2+0.6*Math.sin(sp*0.04+t));
+      ctx.strokeStyle=`rgba(${100+t*8},${200-t*5},${180+t*4},${0.45+pulse*0.2})`;
+      ctx.lineWidth=2.5;
+      ctx.beginPath();ctx.moveTo(s.x,s.y);
+      ctx.quadraticCurveTo(s.x+Math.cos(a+0.4)*len*0.6,s.y+Math.sin(a+0.4)*len*0.6,s.x+Math.cos(a)*len,s.y+Math.sin(a)*len);
+      ctx.stroke();
+    }
+    ctx.restore();
+    // Orbiting cosmic orbs
+    for(let i=0;i<10;i++){
+      let a=(i/10)*Math.PI*2+sp*0.025*(i%2===0?1:-1);
+      ctx.font='13px serif';ctx.textAlign='center';ctx.textBaseline='middle';
+      ctx.fillText(i%2===0?'✦':'🟣',s.x+Math.cos(a)*s.size*1.6,s.y+Math.sin(a)*s.size*1.6);
+    }
+    // Core glow
+    let cg=ctx.createRadialGradient(s.x,s.y,4,s.x,s.y,s.size);
+    cg.addColorStop(0,`rgba(120,255,200,${pulse*0.8})`);
+    cg.addColorStop(0.5,`rgba(150,80,255,${pulse*0.4})`);
+    cg.addColorStop(1,'rgba(60,0,120,0)');
+    ctx.fillStyle=cg;ctx.beginPath();ctx.arc(s.x,s.y,s.size,0,Math.PI*2);ctx.fill();
+    if(s.inked>0){ctx.save();ctx.globalAlpha=0.4;ctx.fillStyle='#D4537E';ctx.beginPath();ctx.arc(s.x,s.y,s.size,0,Math.PI*2);ctx.fill();ctx.restore();}
+    else if(s.frozen>0){ctx.save();ctx.globalAlpha=0.5;ctx.fillStyle='#5DCAA5';ctx.beginPath();ctx.arc(s.x,s.y,s.size,0,Math.PI*2);ctx.fill();ctx.restore();}
+    if(s.hitFlash>0)ctx.globalAlpha=0.3+0.7*Math.abs(Math.sin(s.hitFlash));
+    // Dragon head
+    ctx.font=`${s.size}px serif`;ctx.textAlign='center';ctx.textBaseline='middle';
+    ctx.fillText('🐉',s.x,s.y);ctx.globalAlpha=1;
+    // Title with glow
+    ctx.save();ctx.shadowColor='#50ffb4';ctx.shadowBlur=8;
+    ctx.fillStyle='rgba(120,255,200,0.98)';ctx.font='bold 11px sans-serif';ctx.textAlign='center';
+    ctx.fillText('🐉 WORLD SERPENT 🐉',s.x,s.y-s.size/2-20);
+    ctx.restore();
+    // Big HP bar with billion display
+    let bw=s.size*3.0;
+    drawHpBar(s.x-bw/2,s.y-s.size/2-12,bw,s.hp,s.maxHp,'#50ffb4');
+    ctx.fillStyle='#fff';ctx.font='bold 9px sans-serif';ctx.textAlign='center';
+    ctx.fillText(fmtBig(s.hp)+' HP',s.x,s.y-s.size/2-14);
+    return;
+  }
+  if(s.isColossus){
+    s.colossusPulse=(s.colossusPulse||0)+1;
+    let pulse=0.3+0.2*Math.sin(s.colossusPulse*0.05);
+    // Dark ancient aura — massive, two rows tall
+    ctx.save();ctx.globalAlpha=0.3+0.1*Math.sin(s.colossusPulse*0.04);
+    ctx.fillStyle='#000810';
+    ctx.fillRect(0,(s.row-0.5)*CELL,s.x+s.size*2,CELL*2);ctx.restore();
+    // Bone white outer rings
+    for(let i=5;i>=0;i--){
+      let r2=s.size*(1.4+i*0.5)+Math.sin(s.colossusPulse*0.04+i)*8;
+      ctx.save();ctx.globalAlpha=(0.12-i*0.018)*(pulse+0.1);
+      ctx.fillStyle=i%2===0?'#c8c0a8':'#302820';
+      ctx.beginPath();ctx.arc(s.x,s.y,r2,0,Math.PI*2);ctx.fill();ctx.restore();
+    }
+    // Bone spikes radiating out
+    ctx.save();
+    for(let t=0;t<16;t++){
+      let a=(t/16)*Math.PI*2+s.colossusPulse*0.008;
+      let len=s.size*(1.3+0.5*Math.sin(s.colossusPulse*0.03+t));
+      ctx.strokeStyle=`rgba(${200-t*5},${190-t*4},${160-t*3},${0.5+pulse*0.2})`;
+      ctx.lineWidth=3-t*0.1;
+      ctx.beginPath();ctx.moveTo(s.x,s.y);
+      ctx.lineTo(s.x+Math.cos(a)*len,s.y+Math.sin(a)*len);ctx.stroke();
+      ctx.fillStyle='rgba(220,210,180,0.9)';
+      ctx.beginPath();ctx.arc(s.x+Math.cos(a)*len*0.85,s.y+Math.sin(a)*len*0.85,3,0,Math.PI*2);ctx.fill();
+    }
+    ctx.restore();
+    // 8 orbiting bone shards
+    for(let i=0;i<8;i++){
+      let a=(i/8)*Math.PI*2+s.colossusPulse*0.02*(i%2===0?1:-1);
+      ctx.font='14px serif';ctx.textAlign='center';ctx.textBaseline='middle';
+      ctx.fillText('🦴',s.x+Math.cos(a)*s.size*1.5,s.y+Math.sin(a)*s.size*1.5);
+    }
+    // Core bone glow
+    let cg=ctx.createRadialGradient(s.x,s.y,4,s.x,s.y,s.size*0.9);
+    cg.addColorStop(0,`rgba(220,210,180,${pulse*0.6})`);
+    cg.addColorStop(1,'rgba(140,130,100,0)');
+    ctx.fillStyle=cg;ctx.beginPath();ctx.arc(s.x,s.y,s.size*0.9,0,Math.PI*2);ctx.fill();
+    if(s.inked>0){ctx.save();ctx.globalAlpha=0.4;ctx.fillStyle='#D4537E';ctx.beginPath();ctx.arc(s.x,s.y,s.size,0,Math.PI*2);ctx.fill();ctx.restore();}
+    else if(s.frozen>0){ctx.save();ctx.globalAlpha=0.5;ctx.fillStyle='#5DCAA5';ctx.beginPath();ctx.arc(s.x,s.y,s.size,0,Math.PI*2);ctx.fill();ctx.restore();}
+    else if(s.slowed>0){ctx.save();ctx.globalAlpha=0.35;ctx.fillStyle='#8b0000';ctx.beginPath();ctx.arc(s.x,s.y,s.size,0,Math.PI*2);ctx.fill();ctx.restore();}
+    if(s.hitFlash>0)ctx.globalAlpha=0.25+0.75*Math.abs(Math.sin(s.hitFlash));
+    ctx.font=`${s.size}px serif`;ctx.textAlign='center';ctx.textBaseline='middle';
+    ctx.fillStyle='rgba(220,210,180,0.95)';ctx.fillText('💀',s.x,s.y);ctx.globalAlpha=1;
+    ctx.fillStyle='rgba(220,210,160,0.98)';ctx.font='bold 10px sans-serif';ctx.textAlign='center';
+    ctx.fillText('☠ BONE COLOSSUS ☠',s.x,s.y-s.size/2-18);
+    let bw=s.size*2.6;
+    drawHpBar(s.x-bw/2,s.y-s.size/2-10,bw,s.hp,s.maxHp,'#c8c0a8');
+    ctx.fillStyle='#fff';ctx.font='bold 8px sans-serif';ctx.textAlign='center';ctx.fillText(s.hp.toLocaleString(),s.x,s.y-s.size/2-12);
+    return;
+  }
+  if(s.isTitan){
+    s.titanPulse=(s.titanPulse||0)+1;let pulse=0.3+0.2*Math.sin(s.titanPulse*0.08);
+    ctx.save();ctx.globalAlpha=0.35;ctx.fillStyle='#1a0000';ctx.fillRect(0,s.row*CELL,s.x+s.size*1.5,CELL*2);ctx.restore();
+    for(let i=4;i>=0;i--){let r2=s.size*(1.3+i*0.5)+Math.sin(s.titanPulse*0.06+i)*8;ctx.save();ctx.globalAlpha=(0.18-i*0.03)*(pulse+0.1);ctx.fillStyle=i%2===0?'#3a0000':'#600000';ctx.beginPath();ctx.arc(s.x,s.y,r2,0,Math.PI*2);ctx.fill();ctx.restore();}
+    ctx.save();for(let t=0;t<12;t++){let a=(t/12)*Math.PI*2+s.titanPulse*0.015,len=s.size*(1.1+0.6*Math.sin(s.titanPulse*0.04+t));ctx.strokeStyle=`rgba(${100+t*12},${t*8},0,0.65)`;ctx.lineWidth=3;ctx.beginPath();ctx.moveTo(s.x,s.y);ctx.quadraticCurveTo(s.x+Math.cos(a+0.5)*len*0.55,s.y+Math.sin(a+0.5)*len*0.55,s.x+Math.cos(a)*len,s.y+Math.sin(a)*len);ctx.stroke();ctx.fillStyle=`rgba(255,${80+t*10},0,0.8)`;ctx.beginPath();ctx.arc(s.x+Math.cos(a)*len*0.75,s.y+Math.sin(a)*len*0.75,4,0,Math.PI*2);ctx.fill();}ctx.restore();
+    for(let i=0;i<8;i++){let a=(i/8)*Math.PI*2+s.titanPulse*0.03*(i%2===0?1:-1);ctx.font=`${14+Math.sin(s.titanPulse*0.1+i)*3}px serif`;ctx.textAlign='center';ctx.textBaseline='middle';ctx.fillText('🔥',s.x+Math.cos(a)*s.size*1.25,s.y+Math.sin(a)*s.size*1.25);}
+    if(s.hitFlash>0)ctx.globalAlpha=0.3+0.7*Math.abs(Math.sin(s.hitFlash));
+    ctx.font=`${s.size}px serif`;ctx.textAlign='center';ctx.textBaseline='middle';ctx.fillStyle='rgba(255,80,0,0.9)';ctx.fillText('💀',s.x,s.y);ctx.globalAlpha=1;
+    ctx.fillStyle='rgba(255,160,0,0.98)';ctx.font='bold 10px sans-serif';ctx.textAlign='center';ctx.fillText('☠ DEATH TITAN ☠',s.x,s.y-s.size/2-18);
+    let bw=s.size*2.2;drawHpBar(s.x-bw/2,s.y-s.size/2-10,bw,s.hp,s.maxHp,'#ff6600');
+    ctx.fillStyle='#fff';ctx.font='bold 8px sans-serif';ctx.textAlign='center';ctx.fillText(s.hp,s.x,s.y-s.size/2-12);return;
+  }
+  if(s.isReaper){
+    s.voidPulse=(s.voidPulse||0)+1;let pulse=0.3+0.2*Math.sin(s.voidPulse*0.12);
+    ctx.save();ctx.globalAlpha=0.2;ctx.fillStyle='#0a0020';ctx.fillRect(0,s.row*CELL,s.x+s.size,CELL);ctx.restore();
+    for(let i=3;i>=0;i--){let r2=s.size*(1.2+i*0.4)+Math.sin(s.voidPulse*0.07+i)*6;ctx.save();ctx.globalAlpha=(0.15-i*0.03)*pulse;ctx.fillStyle=i%2===0?'#1a0040':'#000010';ctx.beginPath();ctx.arc(s.x,s.y,r2,0,Math.PI*2);ctx.fill();ctx.restore();}
+    ctx.save();for(let t=0;t<8;t++){let a=(t/8)*Math.PI*2+s.voidPulse*0.02,len=s.size*(1.0+0.5*Math.sin(s.voidPulse*0.05+t));ctx.strokeStyle=`rgba(${80+t*10},0,${160+t*10},0.5)`;ctx.lineWidth=2;ctx.beginPath();ctx.moveTo(s.x,s.y);ctx.quadraticCurveTo(s.x+Math.cos(a+0.5)*len*0.6,s.y+Math.sin(a+0.5)*len*0.6,s.x+Math.cos(a)*len,s.y+Math.sin(a)*len);ctx.stroke();}ctx.restore();
+    for(let i=0;i<6;i++){let a=(i/6)*Math.PI*2+s.voidPulse*0.04;ctx.fillStyle='rgba(120,0,255,0.85)';ctx.font='12px serif';ctx.textAlign='center';ctx.textBaseline='middle';ctx.fillText('◆',s.x+Math.cos(a)*s.size*1.1,s.y+Math.sin(a)*s.size*1.1);}
+    if(s.hitFlash>0)ctx.globalAlpha=0.35+0.65*Math.abs(Math.sin(s.hitFlash));
+    ctx.font=`${s.size}px serif`;ctx.textAlign='center';ctx.textBaseline='middle';ctx.fillStyle='rgba(100,0,200,0.9)';ctx.fillText('💀',s.x,s.y);ctx.globalAlpha=1;
+    ctx.fillStyle='rgba(180,100,255,0.95)';ctx.font='bold 9px sans-serif';ctx.textAlign='center';ctx.fillText('VOID REAPER',s.x,s.y-s.size/2-14);
+    drawHpBar(s.x-s.size/2,s.y-s.size/2-8,s.size,s.hp,s.maxHp,'#7F77DD');
+    ctx.fillStyle='#fff';ctx.font='bold 8px sans-serif';ctx.textAlign='center';ctx.fillText(s.hp,s.x,s.y-s.size/2-10);return;
+  }
+  if(s.isLich){let pulse=0.25+0.15*Math.sin(frameCount*0.1);let g=ctx.createRadialGradient(s.x,s.y,5,s.x,s.y,s.size*2);g.addColorStop(0,`rgba(80,0,160,${pulse+0.3})`);g.addColorStop(0.5,`rgba(160,0,255,${pulse*0.5})`);g.addColorStop(1,'rgba(60,0,120,0)');ctx.fillStyle=g;ctx.beginPath();ctx.arc(s.x,s.y,s.size*2,0,Math.PI*2);ctx.fill();}
+  if(s.isKing){let pulse=0.3+0.15*Math.sin(frameCount*0.08);let g=ctx.createRadialGradient(s.x,s.y,6,s.x,s.y,s.size*1.6);g.addColorStop(0,`rgba(220,160,0,${pulse+0.2})`);g.addColorStop(1,'rgba(180,100,0,0)');ctx.fillStyle=g;ctx.beginPath();ctx.arc(s.x,s.y,s.size*1.6,0,Math.PI*2);ctx.fill();}
+  if(s.inked>0){ctx.save();ctx.globalAlpha=0.45;ctx.fillStyle='#D4537E';ctx.beginPath();ctx.arc(s.x,s.y,s.size*0.85,0,Math.PI*2);ctx.fill();ctx.restore();}
+  else if(s.frozen>0){ctx.save();ctx.globalAlpha=0.5;ctx.fillStyle='#5DCAA5';ctx.beginPath();ctx.arc(s.x,s.y,s.size*0.9,0,Math.PI*2);ctx.fill();ctx.restore();}
+  else if(s.slowed>0){ctx.save();ctx.globalAlpha=0.4;ctx.fillStyle='#8b0000';ctx.beginPath();ctx.arc(s.x,s.y,s.size*0.8,0,Math.PI*2);ctx.fill();ctx.restore();}
+  if(s.poison>0){ctx.save();ctx.globalAlpha=0.3+0.15*Math.sin(frameCount*0.3);ctx.fillStyle='#7FBA00';ctx.beginPath();ctx.arc(s.x,s.y,s.size*0.75,0,Math.PI*2);ctx.fill();ctx.restore();}
+  if(s.hitFlash>0)ctx.globalAlpha=0.4+0.6*Math.abs(Math.sin(s.hitFlash));
+  if(s.isCustomSkel){
+    // purple custom aura
+    ctx.save();ctx.globalAlpha=0.3+0.15*Math.sin(frameCount*0.1);
+    let g=ctx.createRadialGradient(s.x,s.y,2,s.x,s.y,s.size);
+    g.addColorStop(0,'rgba(150,80,255,0.6)');g.addColorStop(1,'rgba(150,80,255,0)');
+    ctx.fillStyle=g;ctx.beginPath();ctx.arc(s.x,s.y,s.size,0,Math.PI*2);ctx.fill();ctx.restore();
+  }
+  if(s.isLich){ctx.font=`${s.size}px serif`;ctx.textAlign='center';ctx.textBaseline='middle';ctx.fillStyle='rgba(180,0,255,0.85)';ctx.fillText('💀',s.x,s.y);}
+  else{ctx.font=`${s.size}px serif`;ctx.textAlign='center';ctx.textBaseline='middle';ctx.fillText(s.emoji,s.x,s.y);}
+  ctx.globalAlpha=1;
+  drawHpBar(s.x-s.size/2,s.y-s.size/2-6,s.size,s.hp,s.maxHp,s.isCustomSkel?'#9650ff':s.isLich?'#AFA9EC':s.isKing?'#f5c400':undefined);
+  if(s.isCustomSkel){ctx.fillStyle='#c9a0ff';ctx.font='bold 7px sans-serif';ctx.textAlign='center';ctx.fillText(s.customName||'Custom',s.x,s.y-s.size/2-9);}
+  if(s.isKing||s.isLich){ctx.fillStyle='#fff';ctx.font='bold 8px sans-serif';ctx.textAlign='center';ctx.fillText(s.hp,s.x,s.y-s.size/2-10);}
+}
+
+function drawFX(){
+  for(let b of starBeams){ctx.save();ctx.globalAlpha=b.life/14;ctx.strokeStyle=b.color||'#FFD700';ctx.lineWidth=3;ctx.beginPath();ctx.moveTo(b.x,b.y);ctx.lineTo(b.tx,b.ty);ctx.stroke();ctx.restore();}
+  for(let r of omegaRings){ctx.save();ctx.globalAlpha=r.life/25;ctx.strokeStyle=r.color||'#AFA9EC';ctx.lineWidth=3;ctx.beginPath();ctx.arc(r.x,r.y,r.r,0,Math.PI*2);ctx.stroke();ctx.restore();}
+  for(let vc of voidCracks){ctx.save();ctx.globalAlpha=vc.life/30;ctx.strokeStyle='#7F77DD';ctx.lineWidth=2;for(let i=0;i<3;i++){let a=vc.angle+i*1.1;ctx.beginPath();ctx.moveTo(vc.x,vc.y);ctx.lineTo(vc.x+Math.cos(a)*vc.size,vc.y+Math.sin(a)*vc.size);ctx.stroke();}ctx.restore();}
+  for(let sp of inkSplats){ctx.save();ctx.globalAlpha=sp.life/20;ctx.fillStyle='#D4537E';ctx.beginPath();ctx.arc(sp.x,sp.y,sp.size,0,Math.PI*2);ctx.fill();ctx.restore();}
+  for(let gb of grapeBounces){ctx.save();ctx.globalAlpha=gb.life/15;ctx.strokeStyle='#7F77DD';ctx.lineWidth=2;ctx.beginPath();ctx.arc(gb.x,gb.y,gb.r,0,Math.PI*2);ctx.stroke();ctx.restore();}
+  for(let sw of titanShockwaves){ctx.save();ctx.globalAlpha=(sw.life/sw.maxLife)*0.6;ctx.strokeStyle='#ff6600';ctx.lineWidth=3+((sw.maxLife-sw.life)/sw.maxLife)*4;ctx.beginPath();ctx.arc(sw.x,sw.y,sw.r,0,Math.PI*2);ctx.stroke();ctx.restore();}
+  for(let bp of bloodParticles){ctx.globalAlpha=bp.life/50;ctx.fillStyle=bp.color||'#cc0020';ctx.beginPath();ctx.arc(bp.x,bp.y,bp.size,0,Math.PI*2);ctx.fill();}ctx.globalAlpha=1;
+  for(let e of explosions){ctx.globalAlpha=e.life/22;ctx.font=`${(e.big?28:16)+(22-e.life)*0.4}px serif`;ctx.textAlign='center';ctx.textBaseline='middle';ctx.fillText(e.isStar?'🌟':e.isOmega?'💜':e.isAstro?'❄️':'💥',e.x,e.y);ctx.globalAlpha=1;}
+  for(let p of projectiles){ctx.font=p.isGrape?'16px serif':p.isInk?'14px serif':p.isCustomProj?'16px serif':'15px serif';ctx.textAlign='center';ctx.textBaseline='middle';ctx.fillText(p.isCustomProj?(p.emoji||'⭐'):p.isGrape?'🍇':p.isInk?'💜':p.isExplode?'💥':'⭐',p.x,p.y);}
+}
+
+function drawMegaRunners(){
+  for(let mr of megaRunners){
+    let pulse=0.3+0.2*Math.sin(frameCount*0.12+mr.id*1.7);
+    // big aura
+    let g=ctx.createRadialGradient(mr.x,mr.y,4,mr.x,mr.y,mr.size*1.4);
+    g.addColorStop(0,`rgba(255,180,0,${pulse*0.7})`);g.addColorStop(1,'rgba(255,100,0,0)');
+    ctx.fillStyle=g;ctx.beginPath();ctx.arc(mr.x,mr.y,mr.size*1.4,0,Math.PI*2);ctx.fill();
+    // impact flash when hitting enemy
+    if(mr.impactFlash>0){
+      ctx.save();ctx.globalAlpha=mr.impactFlash/8;
+      ctx.fillStyle='#fff';ctx.beginPath();ctx.arc(mr.x,mr.y,mr.size*1.2,0,Math.PI*2);ctx.fill();
+      ctx.restore();
+    }
+    // trail - draw oldest first (index 0) to newest last (index n-1)
+    for(let i=0;i<mr.trail.length;i++){
+      ctx.globalAlpha=(i/mr.trail.length)*0.35;
+      ctx.font=`${mr.size*0.7}px serif`;ctx.textAlign='center';ctx.textBaseline='middle';
+      ctx.fillText('🐦',mr.trail[i].x,mr.trail[i].y);
+    }
+    ctx.globalAlpha=1;
+    // the mega porg itself
+    ctx.font=`${mr.size}px serif`;ctx.textAlign='center';ctx.textBaseline='middle';
+    ctx.fillText('🐦',mr.x,mr.y);
+    // HP bar above it
+    let bw=mr.size*1.8;
+    ctx.fillStyle='#c00';ctx.fillRect(mr.x-bw/2,mr.y-mr.size/2-8,bw,5);
+    ctx.fillStyle='#3a3';ctx.fillRect(mr.x-bw/2,mr.y-mr.size/2-8,bw*mr.hp/mr.maxHp,5);
+    // HP number
+    ctx.fillStyle='#fff';ctx.font='bold 8px sans-serif';ctx.textAlign='center';
+    ctx.fillText(Math.floor(mr.hp),mr.x,mr.y-mr.size/2-16);
+  }
+  ctx.globalAlpha=1;
+}
+// getSkeletonsInRow is defined per-frame inside update() using skelByRow index
+
+function update(){
+  if(!started||gameOver||!cells)return;
+  // Guest in multiplayer does NOT simulate — it only renders state from host
+  if(MP.active&&!MP.isHost)return;
+  try{
+  frameCount++;
+  if(_uiDirty){updateUI();_uiDirty=false;}
+  // Auto-upgrade setting: upgrade cheapest affordable Porg twice a second
+  if(globalState.autoUpgrade&&frameCount%30===0) runAutoUpgrade();
+  // Passive Sun power-up: +1 sun/sec per level
+  if(globalState.powerUps.sun_regen&&waveActive&&frameCount%60===0){
+    sun=Math.min(sun+(globalState.powerUps.sun_regen||0),9999999);_uiDirty=true;
+  }
+  // Sky sun: base rate scales up with wave so it stays relevant late game.
+  // Also each drop is worth more as waves progress.
+  let skyChance=0.004+Math.min(wave*0.0004,0.016); // 0.004 at wave 1 → up to 0.02
+  if(Math.random()<skyChance){
+    let skyVal=25+Math.floor(Math.min(wave,200)/4)*5; // 25 → up to ~275 late game
+    suns.push({x:CELL*0.5+Math.random()*COLS*CELL*0.9,y:10,vy:0.2,vx:0,timer:360,value:skyVal});
+  }
+  for(let s of suns){s.x+=(s.vx||0);s.y+=s.vy;s.vy=Math.min(s.vy+0.004,0.5);s.timer--;}suns=suns.filter(s=>s.timer>0);
+  for(let bp of bloodParticles){bp.x+=bp.vx;bp.y+=bp.vy;bp.vy+=0.06;bp.life--;}bloodParticles=bloodParticles.filter(b=>b.life>0);
+  for(let b of starBeams)b.life--;starBeams=starBeams.filter(b=>b.life>0);
+  for(let r of omegaRings){r.r+=5;r.life--;}omegaRings=omegaRings.filter(r=>r.life>0);
+  for(let vc of voidCracks)vc.life--;voidCracks=voidCracks.filter(v=>v.life>0);
+  for(let sp of inkSplats){sp.x+=sp.vx;sp.y+=sp.vy;sp.life--;}inkSplats=inkSplats.filter(s=>s.life>0);
+  for(let gb of grapeBounces){gb.r+=3;gb.life--;}grapeBounces=grapeBounces.filter(g=>g.life>0);
+  for(let sw of titanShockwaves){sw.r+=4;sw.life--;}titanShockwaves=titanShockwaves.filter(sw=>sw.life>0);
+  for(let rp of removeParticles){rp.x+=rp.vx;rp.y+=rp.vy;rp.vy+=0.05;rp.life--;}removeParticles=removeParticles.filter(r=>r.life>0);
+  for(let e of explosions)e.life--;explosions=explosions.filter(e=>e.life>0);
+  for(let s of skeletons){
+    if(s.inked>0)s.inked--;
+    if(s.poison>0){s.poison--;if(frameCount%15===0&&s.hp>0){applyDmgToSkel(s,s.poisonDmg||4);s.hitFlash=3;if(Math.random()<0.5)bloodParticles.push({x:s.x,y:s.y,vx:(Math.random()-0.5)*1.5,vy:-1-Math.random(),life:20,size:3,color:'#7FBA00'});}}
+    if(s.frozen>0){s.frozen--;if(s.frozen>0)continue;}
+    s.speed=s.baseSpeed;s.slowed=0;
+  }
+
+  // Build row index once per frame — avoids O(n*m) skeletons.filter() in plant loop
+  const skelByRow=Array.from({length:ROWS},()=>[]);
+  for(let sk of skeletons){if(sk.hp>0) skelByRow[sk.row].push(sk);}
+  function getSkeletonsInRow(row){return skelByRow[row]||[];}
+  let rb=rateBoost();
+  for(let r=0;r<ROWS;r++){for(let c=0;c<COLS;c++){
+    let p=cells[r][c];if(!p)continue;
+    // Clean up dead plants immediately
+    if(p.hp<=0){
+      if(p.type==='diveporg')removeDiveUnit(c,r);
+      if(p.type==='porgspawner')megaRunners=megaRunners.filter(mr=>!(mr.spawnerCol===c&&mr.spawnerRow===r));
+      cells[r][c]=null;continue;
+    }
+    if(p.hitFlash>0)p.hitFlash--;
+    let lvl=p.level||0,s=getStats(p.type,lvl);
+    let effectiveRate=s.rate>0?Math.max(10,Math.round(s.rate/rb)):s.rate;
+    if(p.type==='diveporg'){updateDivePorg(c,r,p);continue;}
+    if(p.type==='grapes'){p.timer=(p.timer||0)+1;if(p.timer>=effectiveRate){let inRow=getSkeletonsInRow(r);if(inRow.length>0){p.timer=0;fireGrapeProjectile(c,r,Math.round(s.dmg*dmgMult()),s.bounces);}else p.timer=effectiveRate-20;}continue;}
+    if(p.type==='octopus'){p.timer=(p.timer||0)+1;if(p.timer>=effectiveRate){let hasT=false,rc=[r];for(let i=1;i<=s.inkRows;i++){if(r-i>=0)rc.push(r-i);if(r+i<ROWS)rc.push(r+i);}for(let rr of rc)if(getSkeletonsInRow(rr).length>0){hasT=true;break;}if(hasT){p.timer=0;fireInk(c,r,Math.round(s.dmg*dmgMult()),s.inkRows,s.slowFactor,s.inkDuration);}else p.timer=effectiveRate-20;}continue;}
+    if(p.type==='astroflora'){p.timer=(p.timer||0)+1;let cx=c*CELL+CELL/2,cy=r*CELL+CELL/2,reach=s.range*CELL;let nearby=skeletons.filter(sk=>sk.hp>0&&Math.hypot(sk.x-cx,sk.y-cy)<reach);if(p.timer>=effectiveRate&&nearby.length>0){p.timer=0;for(let sk of nearby){if(sk.skelAbility!=='shielded'){sk.frozen=s.freeze;sk.speed=0;}sk.hitFlash=6;applyDmgToSkel(sk,s.dmg);explosions.push({x:sk.x,y:sk.y,life:12,isAstro:true});spawnStarBeam(cx,cy,sk.x,sk.y,'#5DCAA5');}}continue;}
+    if(p.type==='bloodvine'){p.timer=(p.timer||0)+1;let cx=c*CELL+CELL/2,cy=r*CELL+CELL/2,reach=s.range*CELL;let nearby=skeletons.filter(sk=>sk.hp>0&&Math.hypot(sk.x-cx,sk.y-cy)<reach);for(let sk of nearby)if(sk.frozen<=0&&sk.skelAbility!=='shielded'){sk.speed=sk.baseSpeed*s.slowFactor;sk.slowed=1;}if(p.timer>=effectiveRate&&nearby.length>0){p.timer=0;for(let sk of nearby){applyDmgToSkel(sk,s.dmg);sk.hitFlash=6;spawnBloodParticles(sk.x,sk.y,7);}}continue;}
+    if(p.type==='starporg'){p.timer=(p.timer||0)+1;if(p.timer>=effectiveRate){let targets=[...skeletons].filter(sk=>sk.hp>0).sort((a,b)=>a.x-b.x).slice(0,3+(lvl*2));if(targets.length>0){p.timer=0;let cx=c*CELL+CELL/2,cy=r*CELL+CELL/2;for(let sk of targets){applyDmgToSkel(sk,s.dmg);sk.hitFlash=8;spawnStarBeam(cx,cy,sk.x,sk.y);explosions.push({x:sk.x,y:sk.y,life:14,isStar:true});skeletons.filter(sk2=>sk2.hp>0&&sk2!==sk&&Math.hypot(sk2.x-sk.x,sk2.y-sk.y)<s.aoeRange*CELL*0.4).forEach(sk2=>{applyDmgToSkel(sk2,s.dmg*0.5);sk2.hitFlash=5;});}}else p.timer=effectiveRate-10;}continue;}
+    if(p.type==='omegaporg'){p.timer=(p.timer||0)+1;if(p.timer>=effectiveRate){let cx=c*CELL+CELL/2,cy=r*CELL+CELL/2,reach=s.range*CELL;let targets=skeletons.filter(sk=>sk.hp>0&&Math.hypot(sk.x-cx,sk.y-cy)<reach);if(targets.length>0){p.timer=0;spawnOmegaRing(cx,cy);for(let sk of targets){applyDmgToSkel(sk,s.dmg);sk.hitFlash=10;spawnStarBeam(cx,cy,sk.x,sk.y,'#AFA9EC');if(Math.random()<0.4)explosions.push({x:sk.x,y:sk.y,life:12,isOmega:true});}}else p.timer=effectiveRate-10;}continue;}
+    if(p.type==='suncollector'){
+      let s2=getStats('suncollector',p.level||0);
+      let scx=c*CELL+CELL/2, scy=r*CELL+CELL/2;
+      let reach=s2.collectRadius*CELL;
+      let speed=s2.collectSpeed;
+      for(let si=suns.length-1;si>=0;si--){
+        let sv=suns[si];
+        let dx=scx-sv.x,dy=scy-sv.y,dist=Math.hypot(dx,dy);
+        if(dist<reach){
+          // Directly move toward collector (not velocity — gravity loop overwrites vy)
+          let pullStr=Math.min(speed*dist*0.15+speed*3, dist);
+          sv.x+=dx/dist*pullStr;
+          sv.y+=dy/dist*pullStr;
+          if(Math.hypot(scx-sv.x,scy-sv.y)<14){
+            sun=Math.min(sun+(sv.value||25),9999999);updateUI();
+            suns.splice(si,1);
+            omegaRings.push({x:scx,y:scy,r:0,life:12,color:'#f5c400'});
+          }
+        }
+      }
+      continue;
+    }
+    if(p.type==='porgspawner'){
+      let s2=getStats('porgspawner',p.level||0);
+      p.timer=(p.timer||0)+1;
+      if(p.timer>=s2.rate){
+        p.timer=0;
+        megaRunners.push({
+          id:frameCount,row:r,x:c*CELL+CELL/2,y:r*CELL+CELL/2,
+          hp:s2.runnerHp,maxHp:s2.runnerHp,
+          speed:s2.runnerSpeed,dmgPerHit:s2.runnerDmg,
+          size:42,trail:[],impactFlash:0,
+          spawnerCol:c,spawnerRow:r,
+        });
+      }
+      continue;
+    }
+    if(p.type==='coop'){p.timer=(p.timer||0)+1;if(p.timer>=COOP_FRAMES){coopSpawnOmega(c,r);p.timer=0;}continue;}
+    if(p.type.startsWith('custom_')){
+      let abil=s.ability||'none';
+      // Regeneration: heal HP/sec (scaled by level), capped at max HP
+      if(s.regen>0 && p.hp<s.hp){
+        let lvl=p.level||0;
+        let regenScale=lvl===0?1:lvl===1?1.6:lvl===2?2.5:lvl===3?3.8:lvl===4?5.5:8.0;
+        p.hp=Math.min(p.hp+(s.regen*regenScale)/60,s.hp);
+        // occasional healing sparkle
+        if(frameCount%20===0&&p.hp<s.hp){bloodParticles.push({x:c*CELL+CELL/2+(Math.random()*20-10),y:r*CELL+CELL/2,vx:0,vy:-0.8,life:20,size:3,color:'#5DCAA5'});}
+      }
+      // Slow Field: passively slows all enemies within range every frame
+      if(abil==='slowfield'){
+        let plantX=c*CELL+CELL/2;
+        let rangeLimit=(s.customRange>=9)?COLS*CELL:s.customRange*CELL;
+        for(let sk of getSkeletonsInRow(r)){
+          if(sk.x>plantX-20&&sk.x<plantX+rangeLimit&&sk.frozen<=0&&sk.skelAbility!=='shielded'){sk.speed=sk.baseSpeed*0.4;sk.slowed=1;}
+        }
+        // also still deals contact damage on a timer
+        p.timer=(p.timer||0)+1;
+        if(p.timer>=effectiveRate){
+          let inR=getSkeletonsInRow(r).filter(sk=>sk.x>plantX-20&&sk.x<plantX+rangeLimit);
+          if(inR.length>0){p.timer=0;let dmg=Math.round(s.dmg*dmgMult());for(let sk of inR){applyDmgToSkel(sk,dmg);sk.hitFlash=5;}spawnStarBeam(plantX,r*CELL+CELL/2,plantX+Math.min(rangeLimit,CELL*2),r*CELL+CELL/2,'#888');}
+          else p.timer=effectiveRate-15;
+        }
+        continue;
+      }
+      // Sun Generator ability: produce sun on a timer, no targeting needed
+      if(abil==='sun'){
+        p.timer=(p.timer||0)+1;
+        if(p.timer>=effectiveRate){p.timer=0;let sg=Math.round(s.dmg*0.5+30);sun=Math.min(sun+sg,9999999);_uiDirty=true;suns.push({x:c*CELL+CELL/2,y:r*CELL+CELL/2,vy:0.2,vx:0,timer:280});}
+        continue;
+      }
+      if(s.rate<=0){continue;} // safety
+      p.timer=(p.timer||0)+1;
+      if(p.timer>=effectiveRate){
+        let rangeLimit=(s.customRange>=9)?COLS*CELL:s.customRange*CELL;
+        let plantX=c*CELL+CELL/2;
+        let inRange=getSkeletonsInRow(r).filter(sk=>sk.x>plantX-20&&sk.x<plantX+rangeLimit);
+        if(inRange.length>0){
+          p.timer=0;
+          let dmg=Math.round(s.dmg*dmgMult());
+          let projSpeed=s.pspeed||4;
+          if(abil==='pierce'){
+            // hits ALL skeletons in row within range immediately
+            for(let sk of inRange){applyDmgToSkel(sk,dmg);sk.hitFlash=6;}
+            spawnStarBeam(plantX,r*CELL+CELL/2,plantX+rangeLimit,r*CELL+CELL/2,'#FFD700');
+          } else if(abil==='vampiric'){
+            // damage the nearest enemy, then heal this porg + adjacent porgs
+            let tgt=inRange.sort((a,b)=>a.x-b.x)[0];
+            applyDmgToSkel(tgt,dmg);tgt.hitFlash=6;
+            let healAmt=Math.round(dmg*0.6);
+            let healed=[[r,c],[r-1,c],[r+1,c],[r,c-1],[r,c+1]];
+            for(let [hr,hc] of healed){
+              if(hr>=0&&hr<ROWS&&hc>=0&&hc<COLS){let hp2=cells[hr][hc];if(hp2&&hp2.hp>0){let mx=getStats(hp2.type,hp2.level||0).hp;hp2.hp=Math.min(hp2.hp+healAmt,mx);}}
+            }
+            bloodParticles.push({x:tgt.x,y:tgt.y,vx:0,vy:-1,life:22,size:5,color:'#c0392b'});
+            spawnStarBeam(plantX,r*CELL+CELL/2,tgt.x,tgt.y,'#c0392b');
+          } else if(abil==='chain'){
+            fireCustomProjectile(c,r,dmg,projSpeed,s.proj,{chain:true,bouncesLeft:6});
+          } else if(abil==='freeze'){
+            fireCustomProjectile(c,r,dmg,projSpeed,s.proj,{freeze:90});
+          } else if(abil==='poison'){
+            fireCustomProjectile(c,r,dmg,projSpeed,s.proj,{poison:true});
+          } else if(abil==='splash'){
+            fireCustomProjectile(c,r,dmg,projSpeed,s.proj,{explode:true});
+          } else {
+            fireCustomProjectile(c,r,dmg,projSpeed,s.proj,{});
+          }
+        } else {p.timer=effectiveRate-20;}
+      }
+      continue;
+    }
+    if(s.rate===0)continue;
+    p.timer=(p.timer||0)+1;
+    if(p.timer>=effectiveRate){p.timer=0;if(p.type==='sunporg'){let sg=Math.round((s.sunGain||50)*dmgMult());sun=Math.min(sun+sg,9999999);updateUI();suns.push({x:c*CELL+CELL/2,y:r*CELL+CELL/2,vy:0.2,vx:0,timer:280});}else{let inRow=getSkeletonsInRow(r);if(inRow.length>0)fireProjectile(c,r,Math.round(s.dmg*dmgMult()),p.type==='bomber');else p.timer=effectiveRate-20;}}
+  }}
+
+  // Projectiles
+  for(let proj of projectiles){
+    proj.x+=proj.speed||4;
+    if(proj.isInk){let hit=skeletons.find(sk=>sk.row===proj.row&&Math.abs(sk.x-proj.x)<24&&sk.hp>0);if(hit){applyDmgToSkel(hit,proj.dmg);hit.hitFlash=6;hit.inked=proj.inkDuration;hit.speed=hit.baseSpeed*(proj.slowFactor||0.35);inkSplats.push({x:hit.x,y:hit.y,vx:0,vy:0,life:18,size:12});proj.dead=true;}}
+    else if(proj.isGrape){let hit=skeletons.find(sk=>sk.row===proj.row&&Math.abs(sk.x-proj.x)<22&&sk.hp>0);if(hit){applyDmgToSkel(hit,proj.dmg);hit.hitFlash=7;grapeBounces.push({x:hit.x,y:hit.y,r:5,life:15});if(proj.bouncesLeft>0){let nt=skeletons.filter(sk=>sk.hp>0&&sk!==hit).sort((a,b)=>Math.hypot(a.x-hit.x,a.y-hit.y)-Math.hypot(b.x-hit.x,b.y-hit.y))[0];if(nt){proj.row=nt.row;proj.bouncesLeft--;proj.x=hit.x;proj.y=nt.y;}else proj.dead=true;}else proj.dead=true;}}
+    else if(proj.isCustomProj){
+      let hit=skeletons.find(sk=>sk.row===proj.row&&Math.abs(sk.x-proj.x)<22&&sk.hp>0);
+      if(hit){
+        if(proj.explode){
+          skeletons.filter(sk=>sk.hp>0&&Math.hypot(sk.x-hit.x,sk.y-hit.y)<CELL*1.3).forEach(sk=>{applyDmgToSkel(sk,proj.dmg);sk.hitFlash=8;});
+          explosions.push({x:hit.x,y:hit.y,life:20});
+        } else {
+          applyDmgToSkel(hit,proj.dmg);hit.hitFlash=6;
+        }
+        if(proj.freeze>0){hit.frozen=proj.freeze;hit.speed=0;}
+        if(proj.poison){hit.poison=180;hit.poisonDmg=Math.max(2,Math.round(proj.dmg*0.15));}
+        if(proj.chain&&proj.bouncesLeft>0){
+          let nt=skeletons.filter(sk=>sk.hp>0&&sk!==hit).sort((a,b)=>Math.hypot(a.x-hit.x,a.y-hit.y)-Math.hypot(b.x-hit.x,b.y-hit.y))[0];
+          spawnStarBeam(hit.x,hit.y,nt?nt.x:hit.x+40,nt?nt.y:hit.y,'#FFE066');
+          if(nt){proj.row=nt.row;proj.bouncesLeft--;proj.x=nt.x;proj.y=nt.y;proj.dmg=Math.round(proj.dmg*0.85);}else proj.dead=true;
+        } else proj.dead=true;
+      }
+    }
+    else{let hit=skeletons.find(sk=>sk.row===proj.row&&Math.abs(sk.x-proj.x)<22&&sk.hp>0);if(hit){if(proj.isExplode){skeletons.filter(sk=>Math.hypot(sk.x-hit.x,sk.y-hit.y)<CELL*1.2).forEach(sk=>{applyDmgToSkel(sk,proj.dmg);sk.hitFlash=8;});explosions.push({x:hit.x,y:hit.y,life:20});}else{applyDmgToSkel(hit,proj.dmg);hit.hitFlash=6;}proj.dead=true;}}
+  }
+  projectiles=projectiles.filter(p=>!p.dead&&p.x<COLS*CELL+40);
+
+  // Mega Runners — charge down lane, use own HP to damage skeletons
+  for(let mr of megaRunners){
+    if(mr.hp<=0) continue;
+    if(mr.impactFlash>0) mr.impactFlash--;
+    mr.trail.push({x:mr.x,y:mr.y});
+    if(mr.trail.length>6) mr.trail.shift();
+    // Find nearest skeleton in its row ahead of it
+    let target=skeletons.filter(sk=>sk.hp>0&&sk.row===mr.row&&sk.x>mr.x-10).sort((a,b)=>a.x-b.x)[0];
+    if(target && Math.abs(target.x-mr.x)<mr.size*0.8){
+      // COLLISION — drain own HP to deal damage
+      let drain=Math.min(mr.hp,mr.dmgPerHit);
+      mr.hp-=drain;
+      applyDmgToSkel(target,drain);
+      target.hitFlash=8;
+      mr.impactFlash=8;
+      explosions.push({x:mr.x,y:mr.y,life:14,big:true});
+    } else {
+      mr.x+=mr.speed;
+    }
+    // Off screen or dead — remove
+    if(mr.x>COLS*CELL+30) mr.hp=0;
+  }
+  megaRunners=megaRunners.filter(mr=>mr.hp>0);
+
+  // Skeletons
+  for(let s of skeletons){
+    if(s.hp<=0)continue;if(s.frozen>0)continue;if(s.hitFlash>0)s.hitFlash--;
+    // Nightmare boss regenerates HP every frame (unless frozen)
+    if(s.regen>0&&s.hp<s.maxHp){
+      s.hp=Math.min(s.hp+s.regen/60,s.maxHp);
+      if(frameCount%15===0){bloodParticles.push({x:s.x+(Math.random()*40-20),y:s.y+(Math.random()*30-15),vx:0,vy:-1,life:22,size:4,color:'#9b59b6'});}
+    }
+    if(s.inked>0)s.speed=s.baseSpeed*0.35;
+    // Berserk ability: speeds up as it loses HP (up to 2.2x at low health)
+    if(s.skelAbility==='berserk'&&s.maxHp>0){
+      let missing=1-(s.hp/s.maxHp);
+      s.speed=s.baseSpeed*(1+missing*1.2);
+      if(missing>0.5&&frameCount%10===0){bloodParticles.push({x:s.x,y:s.y,vx:0,vy:-1,life:14,size:3,color:'#ff4500'});}
+    }
+    if(s.isReaper&&frameCount%45===0)spawnVoidCrack(s.x-CELL*0.5,s.y);
+    if(s.isTitan){s.slamTimer=(s.slamTimer||0)+1;if(s.slamTimer>=300){s.slamTimer=0;spawnTitanShockwave(s.x,s.y);let sr=[s.row];if(s.row>0)sr.push(s.row-1);if(s.row<ROWS-1)sr.push(s.row+1);for(let rr of sr)for(let c=0;c<COLS;c++){let p=cells[rr][c];if(p&&p.hp>0){p.hp-=plantDamage(p,250);p.hitFlash=15;explosions.push({x:c*CELL+CELL/2,y:rr*CELL+CELL/2,life:20,big:true});if(p.hp<=0){if(p.type==='diveporg')removeDiveUnit(c,rr);if(p.type==='porgspawner')megaRunners=megaRunners.filter(mr=>!(mr.spawnerCol===c&&mr.spawnerRow===rr));cells[rr][c]=null;}}}}}
+    let blocked=false;
+    let rowsToBlock=s.isTitan?[s.row,s.row-1,s.row+1].filter(r=>r>=0&&r<ROWS):[s.row];
+    for(let rr of rowsToBlock){
+      for(let c=0;c<COLS;c++){
+        let p=cells[rr][c];if(!p||p.hp<=0)continue;
+        if(p.type==='diveporg'){let d=getDiveUnit(c,rr);if(d&&d.state!=='idle')continue;}
+        let px=c*CELL+CELL/2;
+        if(s.x>px-CELL*(s.isTitan?0.9:0.6)&&s.x<px+CELL*(s.isTitan?0.9:0.6)){
+          blocked=true;s.attackTimer++;
+          let dmgHit=s.isCustomSkel?(s.attackDmg||50):s.isSerpent?800:s.isNightmare?500:s.isColossus?400:s.isTitan?200:s.isReaper?120:s.isLich?80:s.isKing?55:20,atkInterval=s.isSerpent?18:s.isNightmare?20:s.isColossus?20:s.isTitan?25:s.isReaper?40:60;
+          if(s.attackTimer%atkInterval===0){p.hp-=plantDamage(p,dmgHit);p.hitFlash=8;if(s.isReaper)spawnVoidCrack(px,rr*CELL+CELL/2);if(s.skelAbility==='leech'){s.hp=Math.min(s.hp+dmgHit*2,s.maxHp);bloodParticles.push({x:s.x,y:s.y,vx:0,vy:-1,life:14,size:3,color:'#2ecc71'});}if(p.hp<=0){if(p.type==='diveporg')removeDiveUnit(c,rr);if(p.type==='porgspawner')megaRunners=megaRunners.filter(mr=>!(mr.spawnerCol===c&&mr.spawnerRow===rr));cells[rr][c]=null;}}break;
+        }
+      }
+      if(blocked)break;
+    }
+    if(!blocked)s.x-=s.speed;
+    if(s.x<CELL*0.3){
+      if(SOLO_SKEL.active){
+        // In solo skeleton mode, reaching the left edge is a BREAKTHROUGH (good for you!)
+        s.hp=0;SOLO_SKEL.breakthrough++;
+        for(let i=0;i<10;i++){let a=Math.random()*Math.PI*2;starBeams.push({x:CELL*0.3,y:s.y,tx:CELL*0.3+Math.cos(a)*30,ty:s.y+Math.sin(a)*30,life:14,color:'#c0392b'});}
+        flashVersusMsg('💀 BREACH! '+SOLO_SKEL.breakthrough+'/10');
+        soloSkelUpdateUI();
+        if(SOLO_SKEL.breakthrough>=10){endSoloSkeleton(true);return;}
+      } else {
+        s.hp=0;lives--;updateUI();if(lives<=0){endGame(false);return;}
+      }
+    }
+  }
+  skeletons=skeletons.filter(s=>{
+    if(s.hp<=0){
+      // On-death abilities for custom skeletons
+      if(s.skelAbility==='explosive'){
+        // damage all Porgs in adjacent rows around death point
+        explosions.push({x:s.x,y:s.y,life:24,big:true});
+        for(let i=0;i<14;i++){let a=Math.random()*Math.PI*2;starBeams.push({x:s.x,y:s.y,tx:s.x+Math.cos(a)*40,ty:s.y+Math.sin(a)*40,life:14,color:'#ff6b00'});}
+        let blastRows=[s.row,s.row-1,s.row+1].filter(r=>r>=0&&r<ROWS);
+        let blastDmg=Math.round((s.attackDmg||500)*3);
+        for(let rr of blastRows)for(let c=0;c<COLS;c++){let p=cells[rr][c];if(p&&p.hp>0&&Math.abs(c*CELL+CELL/2-s.x)<CELL*1.6){p.hp-=blastDmg;p.hitFlash=12;if(p.hp<=0){if(p.type==='diveporg')removeDiveUnit(c,rr);if(p.type==='porgspawner')megaRunners=megaRunners.filter(mr=>!(mr.spawnerCol===c&&mr.spawnerRow===rr));cells[rr][c]=null;}}}
+      } else if(s.skelAbility==='splitter'&&!s._isSplit){
+        // spawn 2 smaller minions (half HP, no further splitting)
+        for(let n=0;n<2;n++){
+          let nr=Math.max(0,Math.min(ROWS-1,s.row+(n===0?-1:1)));
+          let chp=Math.round(s.maxHp*0.4);
+          skeletons.push({row:nr,x:s.x,y:nr*CELL+CELL/2,hp:chp,maxHp:chp,speed:s.baseSpeed*1.2,baseSpeed:s.baseSpeed*1.2,reward:Math.round(s.reward*0.3),emoji:s.emoji,size:s.size*0.7,type:0,isCustomSkel:true,_isSplit:true,customName:s.customName+' Jr',attackDmg:Math.round((s.attackDmg||50)*0.5),skelArmor:s.skelArmor||0,skelAbility:'none',attackTimer:0,hitFlash:0,slowed:0,frozen:0,inked:0,regen:0,slamTimer:0});
+        }
+        for(let i=0;i<8;i++)omegaRings.push({x:s.x,y:s.y,r:i*5,life:14,color:'#2ecc71'});
+      }
+      sun=Math.min(sun+s.reward,9999999);
+      globalState.totalKills++;sessionKills++;updateUI();return false;
+    }return true;
+  });
+
+  // Versus mode: no auto-waves. Skeletons come only from the skeleton-player.
+  // Host regenerates skeleton energy (for the guest) and gives the porg-player passive sun.
+  if(MP.active&&MP.mode==='versus'&&MP.isHost){
+    if(MP.vsEnergy===undefined)MP.vsEnergy=100;
+    if(frameCount%30===0){ // twice a second
+      MP.vsEnergy=Math.min(MP.vsEnergy+4,VS.maxEnergy);
+      mpSend({t:'energy',e:Math.round(MP.vsEnergy)});
+    }
+    // Porg player gets a steady sun trickle so the match keeps moving
+    if(frameCount%45===0){sun=Math.min(sun+25,9999999);_uiDirty=true;}
+    // survival "wave" counter just tracks time survived
+    if(frameCount%600===0){wave++;updateUI();}
+  }
+
+  // SOLO SKELETON MODE: regen player energy, run AI Porg defender, ramp difficulty
+  if(SOLO_SKEL.active){
+    if(frameCount%60===0){ // once per second
+      SOLO_SKEL.energy=Math.min(SOLO_SKEL.energy+15+SOLO_SKEL.aiLevel*5,SOLO_SKEL.maxEnergy);
+      soloSkelUpdateUI();
+    }
+    soloSkelAITick();
+    // AI difficulty ramps up over time (every ~20 seconds)
+    if(frameCount%1200===0){SOLO_SKEL.aiLevel++;flashVersusMsg('⚠️ AI defense strengthening! (Lv'+SOLO_SKEL.aiLevel+')');}
+  }
+
+  // Wave (skipped entirely in versus and solo-skeleton modes)
+  if(waveActive&&!(MP.active&&MP.mode==='versus')&&!SOLO_SKEL.active){
+    waveTimer++;
+    while(spawnIndex<spawnList.length&&spawnList[spawnIndex].delay<=waveTimer){let e=spawnList[spawnIndex++];spawnSkeleton(e.row,e.type,e.hpMult);}
+    if(spawnIndex>=spawnList.length&&skeletons.length===0){
+      waveActive=false;
+      let completedWave=wave;
+      let bonus=75+(globalState.powerUps.wave_reward||0)*25;
+      sun=Math.min(sun+bonus,9999999);
+      if(completedWave>globalState.highestWave){globalState.highestWave=completedWave;}
+      saveStateNow();updateUI();
+      wave++;
+      if(wave>MAX_WAVES){endGame(true);return;}
+      let canLobby=globalState.highestWave>=10;
+      setTimeout(()=>{
+        let serpentIncoming=(wave%20===0);
+        let nightmareIncoming=(wave>=15&&wave%15===0&&!serpentIncoming);
+        let label=serpentIncoming?`🐉 BOSS WAVE ${wave} — WORLD SERPENT APPROACHES!`:nightmareIncoming?`👹 BOSS WAVE ${wave} — NIGHTMARE AWAKENS!`:completedWave%1000===0?`🔥 MILESTONE! Wave ${completedWave} cleared!`:completedWave%100===0?`💀 Wave ${completedWave} cleared!`:`Wave ${completedWave} cleared — next: ${wave}`;
+        msgText.textContent=label;
+        msgSub.textContent=serpentIncoming?`⚠️ A 1-billion-HP World Serpent is coming! 🌱 Seeds: ${globalState.seeds} | ☀️ Bonus: +${bonus}`:nightmareIncoming?`⚠️ A 10-million-HP Nightmare that REGENERATES is coming — burst it down fast! 🌱 ${globalState.seeds}`:`🌱 Seeds: ${globalState.seeds} | ☀️ Bonus: +${bonus} | Lobby: ${canLobby?'✅ available':'🔒 reach wave 10'}`;
+        msgBtn.textContent=serpentIncoming?`⚔️ Face the Serpent (Wave ${wave})`:nightmareIncoming?`⚔️ Face the Nightmare (Wave ${wave})`:`▶ Wave ${wave}`;
+        msgBtn2.style.display=canLobby?'inline-block':'none';
+        overlayEl.classList.add('show');
+      },300);
+    }
+  }
+  }catch(err){console.warn('update() error (frame '+frameCount+'):', err);}
+}
+
+function endGame(win){
+  gameOver=true;
+  clearRun();
+
+  // VERSUS MODE: this is a PvP match, not a campaign run. No death penalty.
+  if(MP.active&&MP.mode==='versus'){
+    if(MP.isHost){
+      // Host is the Porg player. Reaching here (lives=0) means the Porgs lost.
+      mpSend({t:'vsover',porgWon:false});
+      msgText.textContent='💀 DEFEAT — The skeletons broke through!';
+      msgSub.textContent=`You survived ${Math.max(0,wave-1)} time-waves as the Porgs. Your friend (skeletons) wins this round!`;
+      msgBtn.textContent='🏠 Back to Lobby';
+      msgBtn2.style.display='none';
+      overlayEl.classList.add('show');
+    }
+    return;
+  }
+
+  let finalWave=wave-1;
+  if(finalWave>globalState.highestWave){globalState.highestWave=finalWave;}
+
+  // DEATH PENALTY: losing wipes all progression EXCEPT custom Porgs (and your speed setting).
+  let wiped=false;
+  if(!win){
+    let keptCustomPorgs=globalState.customPorgs||[];
+    let keptCustomSkels=globalState.customSkels||[];
+    let keptSpeed=globalState.prefSpeed||1;
+    let keptAuto=globalState.autoUpgrade||false;
+    let keptBestWave=globalState.highestWave; // keep best-ever record so the lab unlock isn't lost
+    globalState={
+      highestWave: keptBestWave,
+      totalDamage: 0,
+      totalKills: 0,
+      seeds: 0,
+      unlockedUnits: ['quickporg','shooter','wall','bomber','sunporg','suncollector','porgspawner'],
+      powerUps: {},
+      customPorgs: keptCustomPorgs,
+      customSkels: keptCustomSkels,
+      prefSpeed: keptSpeed,
+      autoUpgrade: keptAuto,
+    };
+    wiped=true;
+  }
+  saveStateNow();
+
+  // Fully reset the run so there is no dead game to resume — board is wiped.
+  cells=Array.from({length:ROWS},()=>Array(COLS).fill(null));
+  skeletons=[];projectiles=[];suns=[];explosions=[];bloodParticles=[];starBeams=[];
+  omegaRings=[];diveUnits=[];voidCracks=[];inkSplats=[];grapeBounces=[];
+  titanShockwaves=[];removeParticles=[];megaRunners=[];
+  waveActive=false;waveActiveResume=false;
+  msgText.textContent=win?'🎉 ALL 10,000 WAVES CLEARED! LEGENDARY!':'💀 You died!';
+  msgSub.textContent=win
+    ? `You reached wave ${finalWave} | Seeds banked: 🌱${globalState.seeds}`
+    : `You reached wave ${finalWave}. 💀 You lost all seeds, unit unlocks, and lobby upgrades — but your 🏗️ custom Porgs (${(globalState.customPorgs||[]).length}) are safe!`;
+  msgBtn.textContent='🔄 New Game';
+  msgBtn2.style.display='block';
+  overlayEl.classList.add('show');
+}
+
+function draw(){
+  if(!cells){ctx.clearRect(0,0,canvas.width,canvas.height);return;}
+  ctx.clearRect(0,0,canvas.width,canvas.height);drawGrid();
+  for(let r=0;r<ROWS;r++)for(let c=0;c<COLS;c++)if(cells[r][c]&&cells[r][c].hp>0&&cells[r][c].type==='sunporg')drawSunPorgGlow(c,r);
+  for(let s of suns){
+    let blink=s.timer<60?(s.timer%10<5?0.4:1):1; // blink when about to expire
+    ctx.save();ctx.globalAlpha=blink;
+    // soft glow halo
+    let gg=ctx.createRadialGradient(s.x,s.y,2,s.x,s.y,16);
+    gg.addColorStop(0,'rgba(255,225,80,0.55)');gg.addColorStop(1,'rgba(255,200,0,0)');
+    ctx.fillStyle=gg;ctx.beginPath();ctx.arc(s.x,s.y,16,0,Math.PI*2);ctx.fill();
+    ctx.font='20px serif';ctx.textAlign='center';ctx.textBaseline='middle';ctx.fillText('☀️',s.x,s.y);
+    // show value for high-value suns
+    if((s.value||25)>25){ctx.fillStyle='#FFEB3B';ctx.font='bold 9px sans-serif';ctx.fillText('+'+(s.value||25),s.x,s.y-15);}
+    ctx.restore();
+  }
+  drawFX();
+  for(let r=0;r<ROWS;r++)for(let c=0;c<COLS;c++)if(cells[r][c]&&cells[r][c].hp>0)drawPlant(c,r,cells[r][c]);
+  for(let s of skeletons)if(s.hp>0)drawSkeleton(s);
+  drawMegaRunners();
+  drawRemoveParticles();
+  if(removeMode){ctx.save();ctx.globalAlpha=0.85;ctx.fillStyle='#c00';ctx.fillRect(0,0,canvas.width,24);ctx.fillStyle='#fff';ctx.font='bold 13px sans-serif';ctx.textAlign='center';ctx.fillText('⛏️ REMOVE MODE — click a unit to sell for 50% back',canvas.width/2,13);ctx.restore();}
+  if(selectedCell&&!removeMode){let{col,row}=selectedCell;ctx.strokeStyle='rgba(255,220,0,0.8)';ctx.lineWidth=3;ctx.strokeRect(col*CELL+2,row*CELL+2,CELL-4,CELL-4);}
+  // Co-op banner
+  if(SOLO_SKEL.active){
+    ctx.save();ctx.globalAlpha=0.9;ctx.fillStyle='#c0392b';
+    ctx.fillRect(0,canvas.height-20,canvas.width,20);
+    ctx.fillStyle='#fff';ctx.font='bold 11px sans-serif';ctx.textAlign='center';
+    ctx.fillText('💀 SOLO SKELETON ASSAULT — Breaches: '+SOLO_SKEL.breakthrough+'/10 — AI Lv'+SOLO_SKEL.aiLevel,canvas.width/2,canvas.height-9);
+    ctx.restore();
+  } else if(MP.active){
+    ctx.save();ctx.globalAlpha=0.9;
+    let bannerText, bannerColor;
+    if(MP.mode==='versus'){
+      bannerColor=MP.isHost?'#1D9E75':'#c0392b';
+      bannerText=MP.connected?('⚔️ VERSUS — '+(MP.isHost?'You are the PORGS (defend!)':'You are the SKELETONS (attack!)')):'⚔️ VERSUS — partner disconnected';
+    } else {
+      bannerColor=MP.isHost?'#1D9E75':'#378ADD';
+      bannerText=MP.connected?('🌐 CO-OP — '+(MP.isHost?'You are Host':'You are Player 2')+' — defending together!'):'🌐 CO-OP — partner disconnected';
+    }
+    ctx.fillStyle=bannerColor;
+    ctx.fillRect(0,canvas.height-20,canvas.width,20);
+    ctx.fillStyle='#fff';ctx.font='bold 11px sans-serif';ctx.textAlign='center';
+    ctx.fillText(bannerText,canvas.width/2,canvas.height-9);
+    ctx.restore();
+  }
+  if(!waveActive&&started&&!gameOver&&!SOLO_SKEL.active){ctx.save();ctx.fillStyle='rgba(0,0,0,0.18)';ctx.fillRect(0,0,canvas.width,canvas.height);ctx.fillStyle='#fff';ctx.font='13px sans-serif';ctx.textAlign='center';ctx.fillText(MP.active&&!MP.isHost?'Waiting for host to start the wave...':'Place units — click placed units to upgrade!',canvas.width/2,canvas.height/2);ctx.restore();}
+}
+
+let gameSpeed=1;
+let waveActiveResume=false;
+const SPEED_OPTIONS=[1,2,3,5];
+function cycleSpeed(){
+  let idx=SPEED_OPTIONS.indexOf(gameSpeed);
+  gameSpeed=SPEED_OPTIONS[(idx+1)%SPEED_OPTIONS.length];
+  globalState.prefSpeed=gameSpeed;
+  saveState();
+  applySpeedButton();applyAutoUpgradeButton();
+}
+function applySpeedButton(){
+  let btn=document.getElementById('speed-btn');
+  if(btn){
+    btn.textContent='⏩ '+gameSpeed+'×';
+    btn.style.background=gameSpeed===1?'#378ADD':gameSpeed===2?'#5DAA5D':gameSpeed===3?'#BA9517':'#C0392B';
+  }
+}
+function toggleAutoUpgrade(){
+  globalState.autoUpgrade=!globalState.autoUpgrade;
+  saveState();
+  applyAutoUpgradeButton();
+}
+function applyAutoUpgradeButton(){
+  let btn=document.getElementById('autoupg-btn');
+  if(btn){
+    let on=globalState.autoUpgrade;
+    btn.textContent='🔼 Auto: '+(on?'ON':'OFF');
+    btn.style.background=on?'#1D9E75':'#555';
+  }
+}
+// Auto-upgrade: periodically upgrade the cheapest affordable Porg on the board.
+function runAutoUpgrade(){
+  if(!globalState.autoUpgrade)return;
+  if(MP.active&&!MP.isHost)return; // skeleton player / guest doesn't auto-upgrade
+  let best=null,bestCost=Infinity;
+  for(let r=0;r<ROWS;r++)for(let c=0;c<COLS;c++){
+    let p=cells[r][c];
+    if(!p||p.hp<=0)continue;
+    let lvl=p.level||0;
+    if(lvl>=MAX_LEVEL)continue;
+    let cost=upgradeCost(p.type,lvl);
+    if(cost<bestCost&&cost<=sun){bestCost=cost;best={c,r,p,lvl};}
+  }
+  if(best){
+    let {c,r,p,lvl}=best;
+    sun-=bestCost;p.level=lvl+1;
+    let s=getStats(p.type,p.level);let mx=Math.round(s.hp*hpMult());
+    p.maxHp=mx;p.hp=Math.min(p.hp+Math.round(mx*0.5),mx);p.timer=0;
+    if(p.type==='diveporg'){let d=getDiveUnit(c,r);if(d){d.level=p.level;d.timer=0;}}
+    // little upgrade sparkle
+    for(let i=0;i<4;i++)omegaRings.push({x:c*CELL+CELL/2,y:r*CELL+CELL/2,r:i*6,life:14,color:'#5DCAA5'});
+    _uiDirty=true;
+  }
+}
+function loop(){
+  requestAnimationFrame(loop);
+  // In multiplayer co-op, never speed up (keeps both players in sync)
+  let steps=MP.active?1:gameSpeed;
+  for(let i=0;i<steps;i++) update();
+  draw();
+  // Host broadcasts authoritative state to guest
+  if(MP.active&&MP.isHost) mpBroadcastState();
+  // Periodically snapshot the active run (debounced internally) — solo only
+  if(!MP.active && !SOLO_SKEL.active && started && !gameOver && frameCount%120===0) saveRun();
+}
+
+// Persist the active run when the page is closed/hidden so reopening resumes it.
+window.addEventListener('beforeunload',()=>{ if(started && !gameOver) saveRunNow(); });
+document.addEventListener('visibilitychange',()=>{ if(document.hidden && started && !gameOver) saveRunNow(); });
+
+// ========== INPUT ==========
+canvas.addEventListener('click',e=>{
+  if(!started||gameOver)return;
+  const rect=canvas.getBoundingClientRect();const mx=(e.clientX-rect.left)*(canvas.width/rect.width),my=(e.clientY-rect.top)*(canvas.height/rect.height);
+  const col=Math.floor(mx/CELL),row=Math.floor(my/CELL);
+
+  // SOLO SKELETON MODE: clicking a lane sends the selected skeleton
+  if(SOLO_SKEL.active){
+    if(row<0||row>=ROWS)return;
+    let cost=vsSkelCost(VS.selectedSkel);
+    if(SOLO_SKEL.energy<cost){flashVersusMsg('Not enough energy! Need '+cost);return;}
+    soloSkelSpawn(VS.selectedSkel,row);
+    return;
+  }
+
+  // GUEST in multiplayer: send actions to host instead of acting locally
+  if(MP.active&&!MP.isHost){
+    // VERSUS: guest is the skeleton commander — clicking a lane sends the selected skeleton
+    if(MP.mode==='versus'){
+      if(row<0||row>=ROWS)return;
+      let cost=vsSkelCost(VS.selectedSkel);
+      if(VS.energy<cost){flashVersusMsg('Not enough energy! Need '+cost);return;}
+      // optimistic local energy deduction (host re-validates authoritatively)
+      VS.energy=Math.max(0,VS.energy-cost);
+      mpUpdateVersusUI();
+      mpSend({t:'sendskel',skelType:VS.selectedSkel,row});
+      return;
+    }
+    // CO-OP: sun collection + porg placement
+    for(let s of suns){if(Math.hypot(s.x-mx,s.y-my)<22){mpRequestAction({type:'collectsun',val:s.value||25});s.timer=0;return;}}
+    if(col<0||col>=COLS||row<0||row>=ROWS||col===0)return;
+    if(removeMode){mpRequestAction({type:'remove',col,row});return;}
+    if(cells[row][col]&&cells[row][col].hp>0){mpRequestAction({type:'upgrade',col,row});return;}
+    let unlocked=globalState.unlockedUnits.includes(selectedType)||['quickporg','shooter','wall','bomber','sunporg','suncollector','porgspawner'].includes(selectedType)||selectedType.startsWith('custom_');
+    if(!unlocked)return;
+    mpRequestAction({type:'place',col,row,unit:selectedType});
+    return;
+  }
+
+  // SOLO or HOST: act locally (host's sim is authoritative)
+  for(let s of suns){if(Math.hypot(s.x-mx,s.y-my)<22){sun=Math.min(sun+(s.value||25),9999999);s.timer=0;updateUI();return;}}
+  if(col<0||col>=COLS||row<0||row>=ROWS||col===0)return;
+  if(removeMode){if(cells[row][col]&&cells[row][col].hp>0)removeUnit(col,row);return;}
+  if(cells[row][col]&&cells[row][col].hp>0){showUpgrade(col,row);return;}
+  closeUpgrade();
+  let unlocked=globalState.unlockedUnits.includes(selectedType)||['quickporg','shooter','wall','bomber','sunporg','suncollector','porgspawner'].includes(selectedType)||selectedType.startsWith('custom_');
+  if(!unlocked)return;
+  const cost=porgDef(selectedType).cost;if(sun<cost)return;
+  let baseHp=Math.round(getStats(selectedType,0).hp*hpMult());
+  cells[row][col]={type:selectedType,level:0,hp:baseHp,maxHp:baseHp,timer:0,hitFlash:0};
+  if(selectedType==='diveporg')createDiveUnit(col,row);
+  sun-=cost;updateUI();
+});
+
+canvas.addEventListener('contextmenu',e=>{
+  e.preventDefault();if(!started||gameOver)return;
+  const rect=canvas.getBoundingClientRect();const mx=(e.clientX-rect.left)*(canvas.width/rect.width),my=(e.clientY-rect.top)*(canvas.height/rect.height);
+  const col=Math.floor(mx/CELL),row=Math.floor(my/CELL);
+  if(col<0||col>=COLS||row<0||row>=ROWS)return;
+  if(MP.active&&!MP.isHost){
+    if(removeMode){mpRequestAction({type:'remove',col,row});}
+    return;
+  }
+  if(removeMode){if(cells[row][col]&&cells[row][col].hp>0)removeUnit(col,row);return;}
+  if(cells[row][col]&&cells[row][col].hp>0)showUpgrade(col,row);
+});
+
+document.querySelectorAll('.shop-card').forEach(card=>{
+  card.addEventListener('click',()=>{
+    const type=card.dataset.type;
+    if(type==='__remove__'){removeMode=!removeMode;document.querySelectorAll('.shop-card').forEach(c=>c.classList.remove('selected'));if(removeMode){card.classList.add('selected');closeUpgrade();}else{document.querySelector('.shop-card[data-type="quickporg"]').classList.add('selected');selectedType='quickporg';}return;}
+    let unlocked=globalState.unlockedUnits.includes(type)||['quickporg','shooter','wall','bomber','sunporg','suncollector','porgspawner'].includes(type);
+    if(!unlocked){alert('🔒 Unlock this unit in the Lobby!');return;}
+    removeMode=false;selectedType=type;document.querySelectorAll('.shop-card').forEach(c=>c.classList.remove('selected'));card.classList.add('selected');
+  });
+});
+
+msgBtn.addEventListener('click',()=>{
+  // SOLO SKELETON MODE button handling
+  if(SOLO_SKEL.active||SOLO_SKEL.justEnded){
+    if(gameOver||SOLO_SKEL.justEnded){
+      // Back to lobby
+      let vp=document.getElementById('vs-panel');if(vp)vp.remove();
+      document.querySelectorAll('#top-bar .shop-card').forEach(c=>c.style.display='');
+      let autoBtn=document.getElementById('autoupg-btn');if(autoBtn)autoBtn.style.display='';
+      SOLO_SKEL.active=false;SOLO_SKEL.justEnded=false;
+      goToLobby();return;
+    }
+    // Begin assault
+    overlayEl.classList.remove('show');
+    waveActive=true; // enables the movement/plant loops to run fully
+    return;
+  }
+  // After a game ends, anyone (including the versus skeleton player) can return to lobby
+  if(gameOver&&MP.active){
+    let vp=document.getElementById('vs-panel');if(vp)vp.remove();
+    document.querySelectorAll('#top-bar .shop-card').forEach(c=>c.style.display='');
+    let speedBtn=document.getElementById('speed-btn');if(speedBtn)speedBtn.style.display='';
+    mpCancel();goToLobby();return;
+  }
+  // In co-op, only the host can start waves
+  if(MP.active&&!MP.isHost)return;
+  overlayEl.classList.remove('show');
+  if(gameOver){
+    if(MP.active){ // co-op restart not supported mid-session; go to lobby
+      mpCancel();goToLobby();return;
+    }
+    // Reset everything then immediately start wave 1
+    initGame();
+    started=true;
+    startWave();
+    return;
+  }
+  // Resuming a restored run that was mid-wave: just un-pause, don't rebuild the wave
+  if(waveActiveResume){
+    waveActive=true;
+    waveActiveResume=false;
+    return;
+  }
+  // Normal between-wave continue
+  started=true;
+  startWave();
+});
+
+// On page load: if a run was saved this browser session, resume it instead of showing the lobby.
+(function tryAutoResume(){
+  if(hasSavedRun()){
+    let ok=restoreRun();
+    if(ok){
+      document.getElementById('lobby').classList.remove('show');
+      document.getElementById('game-wrapper').classList.add('show');
+      canvas.width=COLS*CELL; canvas.height=ROWS*CELL;
+      applySpeedButton();applyAutoUpgradeButton();
+      updateUI();
+      updateShopCards();
+      // Pause at a resume overlay so the player isn't dropped mid-action
+      waveActiveResume=waveActive;
+      waveActive=false; // hold until they click continue
+      overlayEl.classList.add('show');
+      msgText.textContent=`▶ Welcome back — Wave ${wave}`;
+      msgSub.textContent=`Your game was restored. Lives: ${lives} | ☀️ ${sun} | 🌱 ${globalState.seeds}`;
+      msgBtn.textContent=`▶ Resume Wave ${wave}`;
+      msgBtn2.style.display='inline-block';
+    }
+  }
+})();
+
+loop();
+</script>
+</body>
+</html>
