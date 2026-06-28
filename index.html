@@ -933,7 +933,7 @@ let SOLO_SKEL={
   active:false,
   justEnded:false,
   energy:100,
-  maxEnergy:100000000,
+  maxEnergy:10000000000000,
   aiSun:150,           // AI's sun pool for placing Porgs
   breakthrough:0,      // how many skeletons got past (you win at a threshold? or survive)
   aiLevel:1,           // AI difficulty ramps over time
@@ -1330,7 +1330,7 @@ function soloSkelSetupUI(){
   let energyWrap=document.createElement('div');
   energyWrap.innerHTML=`<div style="display:flex;justify-content:space-between;font-size:0.78rem;color:#ff8888;font-weight:600;">
       <span>💀 SKELETON COMMANDER — click a lane to attack! AI breaches left: <span id="solo-breaches">0</span>/10</span>
-      <span id="vs-energy-label">⚡ 10K / 100M</span>
+      <span id="vs-energy-label">⚡ 10K / 10T</span>
     </div>
     <div style="height:10px;background:#000;border-radius:5px;overflow:hidden;margin-top:3px;">
       <div id="vs-energy-bar" style="height:100%;width:30%;background:linear-gradient(90deg,#9b59b6,#c0392b);transition:width 0.2s;"></div>
@@ -1346,7 +1346,15 @@ function soloSkelSetupUI(){
     btn.onclick=()=>{VS.selectedSkel=i;soloSkelUpdateUI();};
     picker.appendChild(btn);
   });
-  // Custom skeletons are NOT available in solo mode (only standard skeletons)
+  // Custom skeletons from the lab — available in solo mode too
+  (globalState.customSkels||[]).forEach(cs=>{
+    let btn=document.createElement('button');
+    btn.className='vs-skel-btn';btn.dataset.skel=cs.id;
+    btn.style.cssText='display:flex;flex-direction:column;align-items:center;padding:5px 7px;border-radius:8px;border:2px solid #9650ff;background:#2a1a3a;color:#fff;cursor:pointer;font-size:0.68rem;min-width:54px;';
+    btn.innerHTML=`<span style="font-size:1.3rem;">${cs.emoji}</span><span style="font-size:0.62rem;color:#c9a0ff;">${cs.name.slice(0,8)}</span><span style="color:#f5c400;font-weight:700;">⚡${cs.cost}</span>`;
+    btn.onclick=()=>{VS.selectedSkel=cs.id;soloSkelUpdateUI();};
+    picker.appendChild(btn);
+  });
   panel.appendChild(picker);
   if(topbar&&topbar.parentNode){topbar.parentNode.insertBefore(panel,topbar.nextSibling);}
   else{document.getElementById('game-wrapper').appendChild(panel);}
@@ -1496,19 +1504,29 @@ function mpApplyState(s){
   if(!s)return;
   sun=s.sun;lives=s.lives;wave=s.wave;waveActive=s.waveActive;
   if(s.gameOver&&!gameOver){gameOver=true;}
+  // Preserve animation counters from existing porgs/skeletons so visuals don't flicker
+  let prevCells=cells;
   // rebuild cells
   cells=Array.from({length:ROWS},()=>Array(COLS).fill(null));
   if(s.c)for(let e of s.c){
     let [r,cc,type,level,hp,maxHp]=e;
-    cells[r][cc]={type,level,hp,maxHp,timer:0,hitFlash:0};
+    let prev=prevCells&&prevCells[r]&&prevCells[r][cc];
+    // keep timer/animation if the same unit type is still in this cell
+    let timer=(prev&&prev.type===type)?(prev.timer||0):0;
+    cells[r][cc]={type,level,hp,maxHp,timer,hitFlash:(prev&&prev.type===type)?(prev.hitFlash||0):0};
   }
-  // rebuild skeletons (render-only, derive visual props from type)
-  skeletons=(s.k||[]).map(e=>{
+  // rebuild skeletons (render-only). Match to previous by index to keep boss pulse animations smooth.
+  let prevSkels=skeletons;
+  skeletons=(s.k||[]).map((e,i)=>{
     let [x,y,row,hp,maxHp,type]=e;
     let t=SKELS[type]||SKELS[0];
+    let prev=prevSkels[i];
+    let carry=(prev&&prev.type===type)?prev:null;
     return {x,y,row,hp,maxHp,type,speed:t.speed,baseSpeed:t.speed,emoji:t.emoji,size:t.size,reward:t.reward,
       isKing:!!t.isKing,isLich:!!t.isLich,isReaper:!!t.isReaper,isTitan:!!t.isTitan,isColossus:!!t.isColossus,isSerpent:!!t.isSerpent,isNightmare:!!t.isNightmare,regen:t.regen||0,
-      hitFlash:0,frozen:0,inked:0,slowed:0,attackTimer:0,voidPulse:0,titanPulse:0,colossusPulse:0,serpentPulse:0,nightmarePulse:0,slamTimer:0};
+      hitFlash:0,frozen:0,inked:0,slowed:0,attackTimer:0,
+      voidPulse:carry?carry.voidPulse:0,titanPulse:carry?carry.titanPulse:0,colossusPulse:carry?carry.colossusPulse:0,
+      serpentPulse:carry?carry.serpentPulse:0,nightmarePulse:carry?carry.nightmarePulse:0,slamTimer:0};
   });
   // projectiles (render-only)
   projectiles=(s.p||[]).map(e=>{
@@ -1959,7 +1977,7 @@ function drawCell(c,r){
 }
 function drawGrid(){for(let r=0;r<ROWS;r++)for(let c=0;c<COLS;c++)drawCell(c,r);ctx.fillStyle='#7ab850';ctx.fillRect(0,0,CELL*0.35,ROWS*CELL);}
 function drawHpBar(x,y,w,hp,maxHp,color){ctx.fillStyle='#c00';ctx.fillRect(x,y,w,4);let ratio=Math.max(0,Math.min(1,hp/maxHp));ctx.fillStyle=color||'#3a3';ctx.fillRect(x,y,w*ratio,4);}
-function fmtBig(n){n=Math.max(0,Math.round(n));if(n>=1e9)return (n/1e9).toFixed(2).replace(/\.?0+$/,'')+'B';if(n>=1e6)return (n/1e6).toFixed(2).replace(/\.?0+$/,'')+'M';if(n>=1e3)return (n/1e3).toFixed(1).replace(/\.?0+$/,'')+'K';return n.toLocaleString();}
+function fmtBig(n){n=Math.max(0,Math.round(n));if(n>=1e12)return (n/1e12).toFixed(2).replace(/\.?0+$/,'')+'T';if(n>=1e9)return (n/1e9).toFixed(2).replace(/\.?0+$/,'')+'B';if(n>=1e6)return (n/1e6).toFixed(2).replace(/\.?0+$/,'')+'M';if(n>=1e3)return (n/1e3).toFixed(1).replace(/\.?0+$/,'')+'K';return n.toLocaleString();}
 function drawUpgradeStar(col,row,p){if(!p.level)return;let stars=p.level>=5?'★★★★★':p.level>=4?'★★★★':p.level>=3?'★★★':p.level>=2?'★★':'★';ctx.fillStyle=p.level>=5?'#FF2D55':p.level>=4?'#BF5AF2':p.level>=3?'#FF3DCB':p.level>=2?'#f5c400':'#aaa';ctx.font=(p.level>=4?'7px':'9px')+' serif';ctx.textAlign='center';ctx.textBaseline='middle';ctx.fillText(stars,col*CELL+CELL-13,row*CELL+8);}
 function drawSunPorgGlow(col,row){let cx=col*CELL+CELL/2,cy=row*CELL+CELL/2,pv=0.55+0.25*Math.sin(frameCount*0.08);let g=ctx.createRadialGradient(cx,cy,2,cx,cy,CELL*0.6);g.addColorStop(0,`rgba(255,230,50,${pv})`);g.addColorStop(1,'rgba(255,200,0,0)');ctx.fillStyle=g;ctx.beginPath();ctx.arc(cx,cy,CELL*0.6,0,Math.PI*2);ctx.fill();}
 
@@ -2909,11 +2927,29 @@ function runAutoUpgrade(){
     _uiDirty=true;
   }
 }
+// On the guest, update() doesn't run, so visual effects never age out and freeze
+// on screen. This ages and clears them each frame so co-op rendering stays clean.
+function mpGuestTickFX(){
+  for(let b of starBeams)b.life--;starBeams=starBeams.filter(b=>b.life>0);
+  for(let r of omegaRings){r.r+=2;r.life--;}omegaRings=omegaRings.filter(r=>r.life>0);
+  for(let vc of voidCracks)vc.life--;voidCracks=voidCracks.filter(v=>v.life>0);
+  for(let e of explosions)e.life--;explosions=explosions.filter(e=>e.life>0);
+  for(let bp of bloodParticles){bp.x+=bp.vx||0;bp.y+=bp.vy||0;bp.vy=(bp.vy||0)+0.06;bp.life--;}bloodParticles=bloodParticles.filter(b=>b.life>0);
+  for(let g of grapeBounces)g.life--;grapeBounces=grapeBounces.filter(g=>g.life>0);
+  for(let t of titanShockwaves){t.r+=4;t.life--;}titanShockwaves=titanShockwaves.filter(t=>t.life>0);
+  for(let ink of inkSplats)ink.life--;inkSplats=inkSplats.filter(i=>i.life>0);
+  for(let rp of removeParticles){rp.x+=rp.vx;rp.y+=rp.vy;rp.vy+=0.05;rp.life--;}removeParticles=removeParticles.filter(r=>r.life>0);
+  // age sun-drop blink timers so they don't sit frozen
+  for(let s of suns)s.timer--;suns=suns.filter(s=>s.timer>0);
+}
+
 function loop(){
   requestAnimationFrame(loop);
   // In multiplayer co-op, never speed up (keeps both players in sync)
   let steps=MP.active?1:gameSpeed;
   for(let i=0;i<steps;i++) update();
+  // Guest doesn't simulate — age out its own visual effects so they don't freeze
+  if(MP.active&&!MP.isHost) mpGuestTickFX();
   draw();
   // Host broadcasts authoritative state to guest
   if(MP.active&&MP.isHost) mpBroadcastState();
